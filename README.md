@@ -39,7 +39,7 @@ progress.
 ## Project Structure
 
 ```
-├── api/                # Backend endpoints (participant) + api/admin (admin panel)
+├── api/                 # Backend endpoints (participant) + api/admin (admin panel)
 ├── assets/              # Logo & mascots
 ├── css/, js/            # Frontend per page
 ├── uploads/             # Uploaded material files (gitignored)

@@ -1,0 +1,764 @@
+/* ===================== SERTIFIKAT PENYELESAIAN PROGRAM ===================== */
+
+.sertifikat-body {
+    background: var(--bg-color);
+}
+
+.sertifikat-main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 20px 70px;
+}
+
+.sertifikat-toolbar {
+    text-align: center;
+    margin-bottom: 26px;
+}
+
+.sertifikat-toolbar-hint {
+    margin: 10px 0 0;
+    font-size: 12.5px;
+    color: #8a8fa3;
+}
+
+/* --- Halaman sertifikat (rasio landscape ala kertas A4 dibalik) ---
+   Catatan: aspect-ratio TIDAK dipasang di sini untuk tampilan layar --
+   kalau dipaksa rasio 1.414/1, tinggi kotak jadi terlalu pendek untuk
+   menampung semua konten (logo, judul, nama, teks isi, kotak skor,
+   footer), dan overflow:hidden akan memotong bagian bawah sertifikat
+   (nama, teks, skor, footer jadi tidak kelihatan sama sekali). Rasio
+   landscape itu baru dipasang khusus untuk mode cetak lewat blok
+   @media print di bawah, karena ukuran kertas cetak memang perlu
+   dipaksa landscape. Di layar, tinggi kotak menyesuaikan konten. */
+.sertifikat-page {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 10px 40px rgba(23, 51, 80, 0.12);
+    max-width: 100%;
+    margin: 0 auto;
+    /* Perisai watermark (.sertifikat-decor, di bawah) sengaja dibuat
+       "nongol" sedikit melewati tepi .sertifikat-border -- overflow:hidden
+       di sini memastikan bagian yang nongol itu ikut kepotong rapi pas
+       di tepi kartu (rounded corner) ini juga, bukan cuma di tepi
+       border-nya doang, supaya tidak ada bagian perisai yang "bocor"
+       kelihatan di luar kartu putih (di atas background abu-abu
+       halaman). */
+    overflow: hidden;
+}
+
+/* Jarak antara halaman 1 (sertifikat) dan halaman 2 (rubrik) di
+   tampilan LAYAR -- di mode cetak jarak ini dihapus lagi (lihat
+   @media print di bawah) karena tiap halaman sudah otomatis mulai
+   dari atas kertas baru, jadi margin ini tidak diperlukan dan malah
+   bisa mendorong isinya turun sampai kepotong ke halaman ke-3. */
+.sertifikat-page+.sertifikat-page {
+    margin-top: 24px;
+}
+
+.sertifikat-border {
+    position: relative;
+    height: 100%;
+    margin: 14px;
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
+    padding: clamp(20px, 4vw, 56px) clamp(24px, 6vw, 80px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+}
+
+/* Garis hijau tipis di dalam bingkai biru -- SEBELUMNYA pakai
+   "outline: 1px solid var(--accent-color); outline-offset: -8px;" (lebih
+   simpel, cuma 2 baris), TAPI ternyata html2canvas (dipakai
+   unduhSertifikatPDF() di js/sertifikat.js buat screenshot jadi PDF)
+   dukungannya ke CSS "outline" TIDAK lengkap/kadang tidak digambar sama
+   sekali -- garis hijaunya jadi hilang begitu diunduh jadi PDF (walau di
+   layar tampil normal, soalnya browser biasa dukung outline dengan
+   baik). Diganti pakai pseudo-element ::after biasa yang diposisikan
+   "inset: 8px" + border asli (bukan outline) -- html2canvas jauh lebih
+   bisa diandalkan buat border/posisi elemen biasa dibanding
+   outline/outline-offset, jadi hasilnya konsisten baik di layar maupun
+   di PDF hasil unduhan. */
+.sertifikat-border::after {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px solid var(--accent-color);
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Perisai watermark nongol dari pojok kanan bawah, besar dan sengaja
+   "kepotong" sebagian (agak mojok, tidak full kelihatan) -- efeknya
+   jadi kayak watermark yang nyelip dari balik tepi kartu.
+
+   PENTING soal ANGKA offset-nya -- kotak ikon ini boleh nongol
+   melewati tepi .sertifikat-border (itu justru efek yang dicari),
+   TAPI jaraknya (right/bottom negatif) SENGAJA dijaga tetap lebih
+   kecil dari jarak margin .sertifikat-border ke tepi halaman cetak
+   (10mm ~ 37.8px, lihat margin .sertifikat-border di @media print di
+   bawah) -- supaya kotak ASLI ikon ini (sebelum dipotong overflow)
+   tetap berada PENUH di dalam batas FISIK halaman cetak, cuma
+   nyerempet tepi border/kartu-nya saja. Kalau angka ini dibesarkan
+   sampai kotak aslinya sampai menjorok melewati tepi halaman (bukan
+   cuma tepi kartu), Chrome TERNYATA suka "menghilangkan" elemen
+   besar+opacity rendah+ke-clip seperti ini dari hasil PDF begitu
+   sertifikatnya lebih dari satu halaman (halaman ke-2 rubrik di bawah)
+   -- perisainya jadi tidak tercetak sama sekali di PDF walau tampil
+   normal di layar. Jangan diperbesar tanpa mengecek ulang lewat PDF
+   sungguhan (bukan cuma lihat tampilan layar), 2 halaman sekaligus. */
+.sertifikat-decor {
+    position: absolute;
+    right: -18px;
+    bottom: -18px;
+    z-index: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sertifikat-decor i {
+    font-size: min(19vw, 200px);
+    color: var(--accent-color);
+    opacity: 0.08;
+}
+
+/* :not(.sertifikat-decor) penting -- tanpa ini, aturan "semua anak
+   langsung .sertifikat-border" di bawah ikut kena ke .sertifikat-decor
+   juga (sama-sama anak langsung .sertifikat-border), dan karena
+   spesifisitasnya SAMA dengan aturan .sertifikat-decor di atas,
+   yang menang cuma soal urutan di file -- aturan ini (lebih bawah)
+   balik nimpa position:absolute milik .sertifikat-decor jadi
+   position:relative lagi, jadi watermark-nya gagal menempel di
+   pojok. */
+.sertifikat-border>*:not(.sertifikat-decor) {
+    position: relative;
+    z-index: 1;
+}
+
+.sertifikat-logo {
+    height: clamp(24px, 4vw, 36px);
+    margin-bottom: clamp(10px, 2vw, 22px);
+}
+
+.sertifikat-kop {
+    font-family: "Playfair Display", "Poppins", serif;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: clamp(20px, 3.6vw, 34px);
+    letter-spacing: 0.02em;
+}
+
+.sertifikat-subkop {
+    font-size: clamp(11px, 1.3vw, 14px);
+    color: var(--accent-color);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: clamp(14px, 3vw, 30px);
+}
+
+.sertifikat-diberikan {
+    font-size: clamp(11px, 1.3vw, 14px);
+    color: #8a8fa3;
+    margin-bottom: 6px;
+}
+
+.sertifikat-nama {
+    font-family: "Playfair Display", "Poppins", serif;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: clamp(24px, 5vw, 46px);
+    padding-bottom: clamp(10px, 2vw, 18px);
+    margin-bottom: clamp(14px, 2.5vw, 24px);
+    border-bottom: 2px solid var(--accent-color);
+    max-width: 90%;
+}
+
+.sertifikat-body-text {
+    max-width: 640px;
+    font-size: clamp(11px, 1.5vw, 15px);
+    color: #495468;
+    line-height: 1.7;
+    margin-bottom: clamp(14px, 3vw, 26px);
+}
+
+.sertifikat-skor-box {
+    display: flex;
+    align-items: center;
+    gap: clamp(16px, 3vw, 36px);
+    background: #f8f9fc;
+    border-radius: 14px;
+    padding: clamp(10px, 1.6vw, 16px) clamp(20px, 3.5vw, 36px);
+    margin-bottom: clamp(16px, 3vw, 30px);
+    /* Tanpa ini, background abu-abu muda kotak skor ini hilang jadi
+       putih polos (nyatu sama background sertifikat) begitu di-print
+       jadi PDF -- browser (Chrome dkk) secara default TIDAK
+       mencetak warna/gambar background sama sekali kecuali opsi
+       "Background graphics" di dialog cetak dicentang manual oleh
+       peserta (dan defaultnya OFF). "print-color-adjust: exact"
+       memaksa browser tetap mencetak background ini walau opsi itu
+       tidak dicentang, supaya kotak skor tidak "hilang" di PDF. */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.sertifikat-skor-label {
+    font-size: clamp(9px, 1.1vw, 11.5px);
+    color: #8a8fa3;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 2px;
+}
+
+.sertifikat-skor-angka {
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.sertifikat-klasifikasi {
+    font-size: clamp(14px, 2vw, 19px);
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* HANYA kata/frasa Bahasa Inggris di dalam label klasifikasi yang
+   dicetak miring (mis. "Practicing" & "Master Thinker" pada
+   "Practicing hingga Master Thinker" -- "hingga"-nya sendiri Bahasa
+   Indonesia, jadi TIDAK ikut miring) -- makanya italic dipasang lewat
+   tag <em> yang sudah dibungkus presisi dari server
+   (klasifikasi.label_html di api/get_sertifikat.php), bukan lewat
+   font-style:italic yang nyeblak ke seluruh teks label sekaligus. */
+.sertifikat-klasifikasi em {
+    font-style: italic;
+}
+
+.sertifikat-skor-divider {
+    width: 1px;
+    align-self: stretch;
+    background: #d9dee8;
+}
+
+.sertifikat-footer {
+    margin-top: auto;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.sertifikat-footer-col {
+    flex: 1;
+    min-width: 0;
+}
+
+/* "Tanggal Selesai" (kolom pertama) SEBELUMNYA ikut ke-center karena
+   mewarisi "text-align: center" dari .sertifikat-border (aturan dasar
+   buat konten sertifikat yang memang rata tengah) -- kolom ini
+   SEHARUSNYA rata KIRI, sejajar dengan tepi padding kiri kartu, SAMA
+   POLA dengan kolom terakhir (No. Sertifikat) yang memang sudah rata
+   kanan (lewat class "text-md-end" di sertifikat.html) -- kolom
+   pertama & terakhir jadi simetris rata luar, kolom tengah (tanda
+   tangan) tetap rata tengah. */
+.sertifikat-footer-col:first-child {
+    text-align: left;
+}
+
+.sertifikat-footer-signature {
+    text-align: center;
+    /* Kolom pertama & terakhir SEBELUMNYA sama-sama "flex: 1" seperti
+       kolom tengah ini -- karena isinya ("24 September 2026", "CN-
+       20260924-0001") jauh lebih pendek dari "Tim Penyelenggara Program
+       Cakar Nalar", pembagian lebar yang RATA TIGA itu malah menyisakan
+       terlalu sedikit ruang buat kolom tengah, jadi teksnya kepaksa
+       patah jadi 2 baris. "flex-grow: 2" di sini (dibanding "flex: 1"
+       bawaan di kolom kiri-kanan) membuat kolom tengah ini mendapat
+       PORSI LEBIH BESAR dari ruang kosong yang tersedia, cukup supaya
+       teksnya muat 1 baris. */
+    flex-grow: 2;
+}
+
+/* "white-space: nowrap" di sini SENGAJA TIDAK dipasang tanpa syarat di
+   sini -- baru diaktifkan lewat ".sertifikat-pdf-capture" (dipasang
+   sementara oleh unduhSertifikatPDF(), lihat css di bagian bawah file
+   ini) & lewat @media print (buat Ctrl+P/cetak fisik manual). KALAU
+   dipasang tanpa syarat, di tampilan LAYAR HP asli (lebarnya sungguhan
+   sempit, mis. 390px, BUKAN dipaksa lebar 297mm seperti mode cetak/
+   unduh) teks "Tim Penyelenggara Program Cakar Nalar" yang dipaksa 1
+   baris malah jadi tumpang-tindih menabrak kolom "No. Sertifikat" di
+   sebelahnya -- soalnya di layar sungguhan memang tidak cukup ruang
+   buat 1 baris. Di layar HP biasa, teksnya tetap boleh patah jadi 2
+   baris seperti semula (aman, tidak nabrak apa-apa) -- cuma dipaksa 1
+   baris waktu ukurannya sudah dipaksa selebar kertas A4 (297mm, cukup
+   lebar buat itu). Dipasang di elemen teksnya sendiri (bukan div
+   pembungkusnya) supaya TIDAK ikut memaksa .sertifikat-signature-line
+   di atasnya jadi selebar teks. */
+@media print {
+    .sertifikat-footer-signature .sertifikat-footer-value {
+        white-space: nowrap;
+    }
+}
+
+.sertifikat-signature-line {
+    width: min(100%, 180px);
+    margin: 0 auto 6px;
+    border-bottom: 1.5px solid var(--primary-color);
+    height: clamp(24px, 4vw, 40px);
+}
+
+.sertifikat-footer-label {
+    font-size: clamp(8px, 1vw, 10.5px);
+    color: #8a8fa3;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 3px;
+}
+
+.sertifikat-footer-value {
+    font-size: clamp(10px, 1.3vw, 13px);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* --- Halaman ke-2 & ke-3: penjelasan rubrik klasifikasi & daftar materi --- */
+.sertifikat-border-rubrik {
+    /* Beda dari .sertifikat-border halaman 1 -- kontennya berupa daftar
+       (bukan teks tersentral), jadi rata kiri, bukan text-align:center. */
+    align-items: stretch;
+    text-align: left;
+    /* SEBELUMNYA overflow-y:auto di sini (dikira perlu buat jaga-jaga
+       kalau kontennya kepanjangan) -- ternyata malah BIKIN scrollbar
+       beneran muncul di tampilan layar walau kontennya sebenarnya
+       muat, gara-gara "height:100%" bawaan .sertifikat-border (di atas)
+       ketemu tinggi induknya (.sertifikat-page) yang auto/menyesuaikan
+       konten -- begitu overflow-y bukan "visible", Chrome menghitung
+       tinggi kotak border ini jadi sedikit lebih pendek dari tinggi
+       kontennya sendiri (beda drastis dari halaman 1 yang TIDAK pakai
+       overflow-y:auto sama sekali dan tidak kena masalah ini). Cukup
+       ikut overflow:hidden bawaan .sertifikat-border saja (SAMA seperti
+       halaman 1) -- kotaknya toh sudah otomatis menyesuaikan tinggi
+       kontennya di layar, jadi tidak butuh scrollbar sama sekali. */
+}
+
+.sertifikat-rubrik-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: clamp(10px, 1.8vw, 18px);
+}
+
+.sertifikat-rubrik-logo {
+    height: clamp(26px, 3vw, 34px);
+    flex-shrink: 0;
+}
+
+.sertifikat-rubrik-header h4 {
+    margin: 0;
+    font-family: "Playfair Display", "Poppins", serif;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: clamp(16px, 2.2vw, 24px);
+}
+
+.sertifikat-rubrik-intro {
+    margin: 0 0 clamp(10px, 1.8vw, 18px);
+    font-size: clamp(11px, 1.3vw, 13.5px);
+    line-height: 1.6;
+    color: #6b7684;
+}
+
+/* "Paul & Elder Critical Thinking Stages" -- istilah Bahasa Inggris
+   di tengah kalimat Indonesia, dicetak miring. */
+.sertifikat-rubrik-intro em {
+    font-style: italic;
+    font-weight: 600;
+    color: #495468;
+}
+
+.sertifikat-rubrik-list {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.4vw, 12px);
+}
+
+.sertifikat-rubrik-item {
+    padding: clamp(9px, 1.4vw, 14px) clamp(12px, 2vw, 18px);
+    border: 1.5px solid #e2e5ec;
+    border-radius: 12px;
+    background: #fff;
+    /* Sama seperti .sertifikat-skor-box -- tanpa ini, warna tint hijau
+       (kategori aktif milik peserta) hilang jadi putih polos begitu
+       di-print kalau opsi "Background graphics" tidak dicentang. */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.sertifikat-rubrik-badge,
+.sertifikat-rubrik-tag {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.sertifikat-rubrik-item-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.sertifikat-rubrik-badge {
+    flex-shrink: 0;
+    width: clamp(48px, 5.5vw, 62px);
+    text-align: center;
+    font-weight: 700;
+    font-size: clamp(10.5px, 1.2vw, 12.5px);
+    padding: 4px 0;
+    border-radius: 8px;
+    background: #eef1f6;
+    color: var(--text-dark);
+}
+
+.sertifikat-rubrik-label {
+    flex: 1;
+    font-size: clamp(11.5px, 1.4vw, 13.5px);
+    color: var(--text-dark);
+    font-weight: 700;
+}
+
+/* Sama seperti .sertifikat-klasifikasi em di atas -- cuma kata/frasa
+   Inggris yang dibungkus <em> dari server yang dicetak miring ("hingga"
+   di "Practicing hingga Master Thinker" TETAP tegak). ".sertifikat-rubrik-desc
+   em" buat "(logical fallacy)" di deskripsi kategori "Challenged /
+   Beginning Thinker" -- kata Inggris yang sebelumnya kelewat, tidak ikut
+   miring padahal harusnya iya. */
+.sertifikat-rubrik-label em,
+.sertifikat-rubrik-desc em {
+    font-style: italic;
+}
+
+.sertifikat-rubrik-tag {
+    flex-shrink: 0;
+    font-size: clamp(9.5px, 1.1vw, 11px);
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sertifikat-rubrik-desc {
+    margin: 0;
+    padding-left: clamp(60px, 6.5vw, 74px);
+    font-size: clamp(10.5px, 1.2vw, 12.5px);
+    line-height: 1.55;
+    color: #6b7684;
+}
+
+.sertifikat-rubrik-item.merah.active {
+    border-color: #d64550;
+    background: rgba(214, 69, 80, 0.06);
+}
+
+.sertifikat-rubrik-item.merah.active .sertifikat-rubrik-badge {
+    background: #d64550;
+    color: #fff;
+}
+
+.sertifikat-rubrik-item.merah.active .sertifikat-rubrik-tag {
+    background: rgba(214, 69, 80, 0.15);
+    color: #d64550;
+}
+
+.sertifikat-rubrik-item.kuning.active {
+    border-color: #e0a000;
+    background: rgba(224, 160, 0, 0.07);
+}
+
+.sertifikat-rubrik-item.kuning.active .sertifikat-rubrik-badge {
+    background: #e0a000;
+    color: #fff;
+}
+
+.sertifikat-rubrik-item.kuning.active .sertifikat-rubrik-tag {
+    background: rgba(224, 160, 0, 0.18);
+    color: #b8860b;
+}
+
+.sertifikat-rubrik-item.hijau.active {
+    border-color: #0C7A6E;
+    background: rgba(12, 122, 110, 0.06);
+}
+
+.sertifikat-rubrik-item.hijau.active .sertifikat-rubrik-badge {
+    background: #0C7A6E;
+    color: #fff;
+}
+
+.sertifikat-rubrik-item.hijau.active .sertifikat-rubrik-tag {
+    background: rgba(12, 122, 110, 0.15);
+    color: #0C7A6E;
+}
+
+/* --- Halaman ke-3: daftar materi yang dipelajari --- */
+.sertifikat-materi-list {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1.1vw, 10px);
+}
+
+.sertifikat-materi-item {
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 1.6vw, 16px);
+    padding: clamp(8px, 1.3vw, 12px) clamp(12px, 2vw, 18px);
+    border: 1.5px solid #e2e5ec;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.sertifikat-materi-nomor {
+    flex-shrink: 0;
+    width: clamp(24px, 2.6vw, 30px);
+    height: clamp(24px, 2.6vw, 30px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 700;
+    font-size: clamp(11px, 1.3vw, 13px);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.sertifikat-materi-judul {
+    flex: 1;
+    font-size: clamp(11.5px, 1.4vw, 13.5px);
+    font-weight: 600;
+    color: var(--text-dark);
+    text-align: left;
+}
+
+/* Skor kuis terakhir bab ybs (data.materi[].skor dari
+   api/get_sertifikat.php) -- chip kecil rata kanan, angka besar di
+   atas & label "SKOR" kecil di bawahnya, SAMA POLA dengan
+   .laporan-card-skor-chip di css/laporan.css (chip skor Tes
+   Diagnostik/Final Tryout di laporan.html), TAPI lebar chip-nya DIBUAT
+   TETAP (width, bukan ikut lebar isi/padding horizontal) supaya semua
+   baris bab rapi sejajar -- skor "100" (3 digit) dan skor "70" (2
+   digit) sama-sama lebar chip-nya, tidak ada yang lebih menjorok ke
+   kiri dari yang lain. Warnanya pakai identitas warna sertifikat
+   (accent), bukan warna status (hijau/dst) -- semua bab di sini SUDAH
+   PASTI lulus (syarat sertifikat bisa tampil), jadi tidak perlu variasi
+   warna per status lagi. */
+.sertifikat-materi-skor {
+    flex-shrink: 0;
+    width: clamp(46px, 5.2vw, 58px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: clamp(4px, 0.7vw, 6px) 4px;
+    border-radius: 10px;
+    background: var(--accent-color);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.sertifikat-materi-skor-angka {
+    font-weight: 700;
+    font-size: clamp(13px, 1.6vw, 16px);
+    color: #fff;
+    line-height: 1.1;
+}
+
+.sertifikat-materi-skor-label {
+    font-size: clamp(7px, 0.9vw, 8.5px);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1;
+}
+
+/* ===================== MODE CETAK (unduh sebagai PDF) ===================== */
+@media print {
+    /* Dipaksa A4 landscape secara eksplisit -- supaya ukuran kertas
+       PDF-nya konsisten A4 untuk semua orang, bukan ikut-ikutan
+       ukuran kertas default printer/OS masing-masing (yang di
+       beberapa negara defaultnya Letter, bukan A4). */
+    @page {
+        size: A4 landscape;
+        margin: 0;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    body,
+    .sertifikat-body {
+        background: #fff !important;
+    }
+
+    .sertifikat-main {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .sertifikat-page {
+        box-shadow: none;
+        border-radius: 0;
+        aspect-ratio: auto;
+        /* SEBELUMNYA 100vw/100vh -- ternyata itu penyebab hasil cetak
+           dari HP (unduh sertifikat lewat browser Android/iOS) jadi
+           terpotong 2 halaman (padahal harusnya cuma 1), walau di
+           laptop/desktop aman-aman saja. Penyebabnya: unit vw/vh itu
+           berdasarkan VIEWPORT LAYAR ASLI perangkat, dan Chrome/Safari
+           di desktop KEBETULAN menghitungnya sesuai ukuran kertas cetak
+           (A4 landscape) waktu mode cetak aktif -- tapi banyak browser
+           cetak di HP TIDAK melakukan itu; mereka tetap memakai ukuran
+           layar HP yang aslinya PORTRAIT (sempit & tinggi), jadi
+           "100vh" hasil hitungnya jadi jauh lebih tinggi dari tinggi
+           kertas A4 landscape yang sebenarnya (297mm x 210mm) --
+           membuat isi sertifikat "meluber" melewati batas satu halaman
+           dan browser terpaksa bikin halaman ke-2 buat menampung
+           sisanya. Diganti ke ukuran fisik kertas langsung (297mm x
+           210mm, PERSIS sama dengan "size: A4 landscape" di @page di
+           atas) supaya TIDAK bergantung sama sekali ke viewport layar
+           perangkat -- konsisten 1 halaman baik di laptop maupun HP. */
+        width: 297mm;
+        height: 210mm;
+        /* .sertifikat-page sendiri tidak punya border/padding, jadi
+           margin-top milik .sertifikat-border (10mm, di bawah) akan
+           "collapse" (menyatu) menembus .sertifikat-page ini -- lalu
+           menembus terus ke #sertifikat-wrap dan <main> di atasnya juga
+           (mereka juga sama-sama tidak punya border/padding) -- yang
+           akibatnya malah mendorong SELURUH halaman turun ~10mm dan
+           menambah tinggi dokumen ~10mm ekstra di luar batas satu
+           halaman (bukan "diserap" di dalam kotak sertifikat seperti
+           yang dikira). "overflow: hidden" di sini membuat
+           .sertifikat-page jadi konteks pemformatan blok baru, yang
+           mencegah margin anaknya "bocor" ke luar seperti itu. */
+        overflow: hidden;
+    }
+
+    /* .sertifikat-border punya "height: 100%" bawaan (aturan dasar di
+       atas, buat tampilan layar) -- height itu TIDAK otomatis berkurang
+       cuma karena ditambah margin di sini. Akibatnya tinggi kotak border
+       jadi PERSIS setinggi satu halaman penuh (794px A4 landscape), lalu
+       digeser turun oleh margin-top-nya sendiri (10mm) -- jadi sisi
+       bawahnya nongol ~2x margin (10mm atas + 10mm bawah = 20mm) melewati
+       batas bawah halaman, dan browser bikin halaman ke-2 buat
+       menampung "sisa" yang kepotong itu. Makanya height-nya perlu
+       dikurangi calc(100% - 20mm) di sini juga, supaya kotak + margin
+       kanan-kirinya PAS satu halaman, bukan cuma margin-nya doang yang
+       ditambah. */
+    .sertifikat-border {
+        margin: 10mm;
+        height: calc(100% - 20mm);
+    }
+
+    /* Halaman ke-2 (rubrik) WAJIB mulai dari kertas baru -- tanpa ini,
+       browser cetak boleh saja memilih memotong halaman di tengah-tengah
+       salah satu kotak (bukan pas di antara dua .sertifikat-page), atau
+       malah "menumpuk" keduanya dalam satu kertas kalau kebetulan sisa
+       ruangnya muat. margin-top jarak-antar-halaman (buat tampilan
+       LAYAR) juga di-nolkan di sini -- di kertas cetak, halaman baru
+       sudah otomatis mulai dari paling atas, jadi margin itu cuma
+       menambah jarak kosong yang tidak perlu. */
+    .sertifikat-page+.sertifikat-page {
+        margin-top: 0;
+        break-before: page;
+        page-break-before: always;
+    }
+}
+
+/* ===================== MODE UNDUH LANGSUNG (html2pdf.js) =====================
+   Class ini ditempelkan SEMENTARA oleh unduhSertifikatPDF() di
+   js/sertifikat.js ke #sertifikat-wrap, cuma selama proses screenshot
+   berlangsung (dilepas lagi begitu selesai) -- supaya html2canvas
+   men-screenshot LAYOUT UKURAN CETAK YANG BENAR (A4 landscape, 297mm x
+   210mm per halaman, SAMA seperti isi @media print di atas), BUKAN
+   layout auto-height/lebar-penuh yang dipakai buat tampilan layar biasa
+   (yang di HP portrait sempit-tinggi, bukan landscape). Aturan di bawah
+   ini SENGAJA diduplikat dari isi @media print di atas (bukan disatukan
+   lewat "@media print, ..." atau ditaruh di dalam blok print itu saja)
+   -- soalnya proses screenshot html2canvas TIDAK memicu "print media"
+   sungguhan (beda dari window.print() asli lewat dialog cetak browser),
+   jadi aturan yang cuma ada di dalam @media print itu TIDAK akan ikut
+   aktif kalau tidak diduplikat begini di luar @media. */
+.sertifikat-pdf-capture .sertifikat-page {
+    box-shadow: none;
+    border-radius: 0;
+    aspect-ratio: auto;
+    width: 297mm;
+    height: 210mm;
+    overflow: hidden;
+}
+
+.sertifikat-pdf-capture .sertifikat-border {
+    margin: 10mm;
+    height: calc(100% - 20mm);
+}
+
+.sertifikat-pdf-capture .sertifikat-page+.sertifikat-page {
+    margin-top: 0;
+}
+
+/* Tombol unduh & teks keterangan (.no-print) TIDAK boleh ikut kescreenshot
+   masuk ke PDF -- persis alasan yang sama kenapa .no-print disembunyikan
+   di @media print (dipakai ulang lewat class yang sama, bukan dibuatkan
+   nama baru), supaya konsisten: apapun yang ditandai "jangan ikut
+   dicetak" otomatis juga berarti "jangan ikut masuk PDF hasil unduhan". */
+.sertifikat-pdf-capture .no-print {
+    display: none !important;
+}
+
+/* "Tim Penyelenggara Program Cakar Nalar" dipaksa 1 baris (bukan patah
+   jadi 2) -- SAMA seperti aturan ".sertifikat-footer-signature
+   .sertifikat-footer-value" di dalam @media print di atas, diduplikat
+   di sini dengan alasan yang SAMA seperti aturan .sertifikat-pdf-capture
+   lain di atas (screenshot html2canvas tidak memicu @media print
+   sungguhan). Aman dipaksa 1 baris di sini -- .sertifikat-pdf-capture
+   HANYA aktif waktu .sertifikat-page sudah dipaksa selebar 297mm
+   (cukup lebar), BEDA dari tampilan layar HP biasa yang sungguhan
+   sempit (makanya di situ tetap dibiarkan boleh patah 2 baris, lihat
+   komentar di aturan dasarnya). */
+.sertifikat-pdf-capture .sertifikat-footer-signature .sertifikat-footer-value {
+    white-space: nowrap;
+}
+
+/* Ukuran ikon perisai watermark (.sertifikat-decor) DIPAKSA angka tetap
+   di sini (200px, bukan lagi ikut rumus "min(19vw, 200px)" di aturan
+   dasarnya) -- KETEMU lewat perbandingan piksel hasil unduhan laptop
+   vs HP: walau .sertifikat-page & konten lain SUDAH konsisten (berkat
+   windowWidth/windowHeight di js/sertifikat.js), ikon perisai ini
+   TETAP tergambar jauh lebih kecil di hasil unduhan dari HP -- ternyata
+   html2canvas TIDAK SELALU konsisten menghitung ulang "vw" khusus buat
+   UKURAN IKON FONT (beda dari ukuran teks/padding biasa yang sudah
+   terbukti konsisten lewat windowWidth) -- kemungkinan besar terkait
+   cara html2canvas menggambar glyph ikon font secara terpisah dari
+   elemen teks biasa. Solusi paling pasti (bukan menebak-nebak
+   pengaturan windowWidth lagi): TIDAK pakai vw sama sekali di sini,
+   angka tetapnya (200px) PERSIS hasil hitungan "min(19vw,200px)" pada
+   lebar 297mm/1123px (19% x 1123px = 213px, dibatasi maksimal 200px)
+   -- otomatis 100% SAMA di perangkat manapun, karena sudah tidak
+   bergantung ke vw yang ternyata tidak bisa diandalkan konsisten buat
+   kasus spesifik ini. */
+.sertifikat-pdf-capture .sertifikat-decor i {
+    font-size: 200px;
+}

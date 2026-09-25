@@ -1,0 +1,318 @@
+/* ===================== HALAMAN MATERI BAB ===================== */
+
+.materi-main {
+    max-width: 820px;
+}
+
+.materi-header {
+    margin-bottom: 24px;
+}
+
+.materi-bab-badge {
+    display: inline-block;
+    background: rgba(12, 122, 110, 0.1);
+    color: var(--accent-color);
+    font-weight: 700;
+    font-size: 12.5px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+}
+
+.materi-header h2 {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.materi-header p {
+    color: #6c7284;
+    font-size: 15px;
+    margin: 0;
+}
+
+/* --- Video (iframe YouTube responsif 16:9) --- */
+.materi-video-wrap {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #000;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(23, 51, 80, 0.08);
+}
+
+.materi-video-wrap iframe,
+.materi-video-wrap video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* --- Teks materi --- */
+.materi-teks {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(23, 51, 80, 0.06);
+    color: var(--text-dark);
+    font-size: 15.5px;
+    line-height: 1.75;
+    white-space: pre-line;
+}
+
+/* Teks materi sekarang bisa berisi HTML dari editor rich text (bold/
+   italic/underline/daftar) di Panel Admin -- style dasar buat tag yang
+   mungkin muncul di dalamnya. */
+.materi-teks ul,
+.materi-teks ol {
+    margin: 10px 0 10px 22px;
+}
+
+/* Teks materi sekarang juga bisa berisi gambar/heading/link/tabel dari
+   editor rich text yang diperluas di Panel Admin (lihat sisipGambarMateri/
+   sisipTabelMateri/sisipLinkMateri & sanitizeRichHtmlMateri di js/materi.js)
+   -- style dasar buat tag-tag tambahan itu di halaman materi peserta. */
+.materi-teks img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    display: block;
+    margin: 14px 0;
+    box-shadow: 0 4px 16px rgba(23, 51, 80, 0.08);
+    /* Bisa diklik untuk lihat versi lebih besar (lihat
+       initGambarLightboxMateri di js/materi.js) -- gambar di sini memang
+       sengaja mengecil menyesuaikan lebar kotak materi. */
+    cursor: zoom-in;
+    transition: opacity 0.15s ease;
+}
+
+.materi-teks img:hover {
+    opacity: 0.9;
+}
+
+/* Popup lightbox (SweetAlert2) buat lihat gambar materi ukuran penuh --
+   dipanggil dari bukaLightboxGambarMateri() waktu gambar di teks materi
+   diklik. Warna latarnya sendiri (gelap transparan, bukan putih bawaan
+   SweetAlert2) sudah diatur lewat opsi "background" di Swal.fire --
+   di sini cuma hilangkan bayangan kotak popup bawaan supaya terasa
+   seperti mode "lihat foto", bukan dialog form biasa. */
+.materi-lightbox-popup {
+    box-shadow: none !important;
+    position: relative !important;
+    /* Padding atas dilebihkan supaya ada ruang kosong buat tombol close
+       (posisinya digeser turun lewat aturan .swal2-close di bawah) --
+       supaya tombolnya tidak numpuk di atas gambar. */
+    padding-top: 2.75em !important;
+}
+
+/* Tombol close bawaan SweetAlert2 -- versi SweetAlert2 yang dipakai di
+   sini menaruhnya lewat CSS grid (position:static), BUKAN position:
+   absolute seperti versi lama, jadi kalau kontennya (gambar) pendek dia
+   ikut numpuk/tumpang-tindih dengan gambar. Dipaksa position:absolute di
+   sini supaya lepas dari grid & posisinya bisa diatur sendiri, jelas
+   TERPISAH di luar area gambar (bukan menutupi gambarnya). */
+.materi-lightbox-popup .swal2-close {
+    position: absolute !important;
+    top: 6px !important;
+    right: 6px !important;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+}
+
+.materi-lightbox-img {
+    display: block;
+    margin: 0 auto;
+    max-width: 90vw;
+    max-height: 80vh;
+    width: auto;
+    height: auto;
+    /* Gambar ditampilkan APA ADANYA (tidak diberi border-radius/efek
+       apapun di sudutnya) -- beda dengan tampilan kecilnya di teks
+       materi yang sengaja dikasih sudut membulat. */
+    object-fit: contain;
+}
+
+.materi-teks h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 22px 0 10px;
+    line-height: 1.35;
+}
+
+.materi-teks h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 18px 0 8px;
+    line-height: 1.4;
+}
+
+.materi-teks a {
+    color: var(--accent-color);
+    text-decoration: underline;
+    word-break: break-word;
+}
+
+.materi-teks a:hover {
+    text-decoration: none;
+}
+
+/* Tabel dibungkus div ".materi-table-scroll" TERPISAH (dipasang otomatis
+   oleh bungkusTabelScrollMateri() di js/materi.js, bukan lewat CSS
+   "display:block" langsung di <table>) supaya scroll horizontal di layar
+   sempit tidak bikin lebar kolom <col> (dari initTableColumnResize() di
+   admin.js) diabaikan -- "display:block" pada <table> itu sendiri bikin
+   browser melepas tabelnya dari algoritma layout tabel, jadi lebar
+   kolomnya jadi menyusut ikut isi, bukan memenuhi lebar kartu materi. */
+.materi-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 14px 0;
+}
+
+.materi-teks table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.materi-teks th,
+.materi-teks td {
+    border: 1px solid #e2e5ec;
+    padding: 8px 12px;
+    font-size: 14px;
+    text-align: left;
+    min-width: 80px;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.materi-teks th {
+    background: #f6f8fb;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* --- Kartu link (PPT/PDF & fallback video non-YouTube) --- */
+.materi-ppt-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 24px;
+    text-decoration: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.materi-ppt-card:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 16px rgba(12, 122, 110, 0.12);
+}
+
+.materi-ppt-card>i:first-child {
+    font-size: 26px;
+    color: var(--accent-color);
+    flex-shrink: 0;
+}
+
+.materi-ppt-card>div {
+    flex: 1;
+    min-width: 0;
+}
+
+.materi-ppt-title {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 14px;
+}
+
+.materi-ppt-name {
+    color: #6c7284;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.materi-ppt-open-icon {
+    color: #c3c8d4;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.materi-empty {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 20px;
+    text-align: center;
+    color: #8a8fa3;
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.materi-empty i {
+    display: block;
+    font-size: 28px;
+    margin-bottom: 10px;
+    color: #c3c8d4;
+}
+
+/* --- Ajakan lanjut (kerjakan kuis / tanpa kuis) --- */
+.materi-cta {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 28px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(23, 51, 80, 0.06);
+}
+
+.materi-cta p {
+    color: var(--text-dark);
+    font-size: 14.5px;
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+
+.materi-cta-nokuis p {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.materi-cta-nokuis p i {
+    margin-right: 6px;
+}
+
+.materi-cta-nilai-minimal {
+    background: #f6f8fb;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px !important;
+    color: var(--text-dark);
+    margin-bottom: 16px !important;
+}
+
+.materi-cta-nilai-minimal i {
+    color: var(--accent-color);
+    margin-right: 6px;
+}
+
+.materi-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: auto;
+    padding-left: 26px;
+    padding-right: 26px;
+}

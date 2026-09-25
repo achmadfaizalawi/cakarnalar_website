@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cakar Nalar: Cerdas Berkarakter dan Nalar</title>
+
+    <link rel="icon" type="image/png" href="assets/logo/logo-icon-transparent.png">
+
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="prefetch" href="dashboard.html" as="document">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- ===================== NAVBAR ===================== -->
+    <nav class="navbar-cakar">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="#beranda"><img src="assets/logo/logo-cakar-nalar-horizontal.png" class="logo-img"
+                    alt="Cakar Nalar"></a>
+
+            <div class="d-none d-lg-flex align-items-center">
+                <a href="#tentang" class="nav-link-custom" onclick="event.preventDefault(); scrollToSection('tentang')">Tentang</a>
+                <a href="#landasan" class="nav-link-custom" onclick="event.preventDefault(); scrollToSection('landasan')">Landasan</a>
+                <a href="#pemandu" class="nav-link-custom" onclick="event.preventDefault(); scrollToSection('pemandu')">Pemandu Belajar</a>
+                <a href="#cara-belajar" class="nav-link-custom" onclick="event.preventDefault(); scrollToSection('cara-belajar')">Cara Belajar</a>
+            </div>
+
+            <div id="nav-auth-area" class="d-none d-lg-flex align-items-center gap-2">
+                <button class="btn btn-outline-nav" onclick="openAuthModal('login')">Masuk</button>
+                <button class="btn btn-solid-nav" onclick="openAuthModal('register')">Daftar</button>
+            </div>
+
+            <button class="navbar-toggler-custom d-lg-none" onclick="toggleMobileMenu()"
+                aria-label="Buka menu navigasi" aria-expanded="false" id="mobileMenuBtn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" onclick="closeMobileMenu()"></div>
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="container">
+            <a href="#tentang" class="mobile-nav-link" onclick="event.preventDefault(); scrollToSection('tentang')">Tentang</a>
+            <a href="#landasan" class="mobile-nav-link" onclick="event.preventDefault(); scrollToSection('landasan')">Landasan</a>
+            <a href="#pemandu" class="mobile-nav-link" onclick="event.preventDefault(); scrollToSection('pemandu')">Pemandu Belajar</a>
+            <a href="#cara-belajar" class="mobile-nav-link" onclick="event.preventDefault(); scrollToSection('cara-belajar')">Cara Belajar</a>
+            <div id="mobile-nav-auth-area" class="mobile-auth-buttons">
+                <button class="btn btn-outline-nav" onclick="closeMobileMenu(); openAuthModal('login')">Masuk</button>
+                <button class="mobile-cta-btn" onclick="closeMobileMenu(); openAuthModal('register')">Daftar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== HERO ===================== -->
+    <header class="hero" id="beranda">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 reveal in-view">
+                    <span class="hero-badge"><i class="fa-solid fa-shield-halved"></i> Program Pengabdian
+                        Masyarakat</span>
+                    <h1>Saring Informasi,<br>Tajamkan Nalar,<br>Lawan Hoaks.</h1>
+                    <p class="lead">Cakar Nalar adalah program pembelajaran berpikir kritis berbasis sains kognitif
+                        untuk remaja hingga masyarakat umum, membedah fakta dari asumsi, mendeteksi disinformasi,
+                        dan membangun kewarganegaraan digital yang santun.</p>
+                    <div class="hero-cta d-flex gap-3 flex-wrap">
+                        <button class="btn btn-solid-nav" style="padding:13px 26px;" id="hero-cta-btn"
+                            onclick="openAuthModal('register')">
+                            Daftar &amp; Mulai Belajar <i class="fa-solid fa-arrow-right ms-1"></i>
+                        </button>
+                        <a href="#tentang" class="btn btn-outline-nav"
+                            style="padding:13px 26px; color:#fff; border-color:rgba(255,255,255,0.35);">
+                            Pelajari Programnya
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-mascot-stack">
+                        <img src="assets/mascots/robot_botis_mascot.png" class="m2" alt="Robot Botis">
+                        <img src="assets/mascots/semut_tahu_mascot.png" class="m1" alt="Semut Tahu">
+                        <img src="assets/mascots/kancil_cil_mascot.png" class="m3" alt="Kancil Cil">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===================== TENTANG ===================== -->
+    <section id="tentang">
+        <div class="container">
+            <div class="row reveal">
+                <div class="col-12">
+                    <span class="section-label"><i class="fa-solid fa-book-open"></i> Tentang Program</span>
+                    <h2 class="section-title">Benteng Kognitif di Tengah Banjir Informasi</h2>
+                    <p class="section-sub mb-3" style="max-width:100%;">Perkembangan teknologi informasi dan media
+                        sosial di Indonesia membawa dampak ganda: di satu sisi mempermudah komunikasi, namun di
+                        sisi lain memicu banjir disinformasi, deepfake, serta manipulasi narasi digital. Program
+                        Pengabdian Masyarakat Cakar Nalar hadir sebagai benteng kognitif untuk membangun
+                        masyarakat yang tidak hanya cerdas teknologi, tetapi juga tajam dalam bernalar dan
+                        berkarakter etis.</p>
+                    <p class="section-sub mb-4" style="max-width:100%;">Program ini menyasar remaja usia 13 tahun ke
+                        atas hingga masyarakat umum, dengan pendekatan yang membumi: setiap konsep berpikir kritis
+                        dijelaskan lewat studi kasus nyata Indonesia, mulai dari pesan berantai di grup keluarga,
+                        video hasil rekayasa AI, hingga debat kebijakan publik, supaya materi tidak berhenti di
+                        teori, tapi benar-benar terpakai saat peserta kembali membuka media sosialnya sehari-hari.</p>
+                </div>
+            </div>
+            <div class="row g-4 mt-2 reveal">
+                <div class="col-md-6">
+                    <div class="about-card">
+                        <div class="icon-badge" style="background:var(--accent-color);"><i
+                                class="fa-solid fa-eye"></i></div>
+                        <h5>Visi</h5>
+                        <p>Terwujudnya masyarakat Indonesia yang kritis, berkarakter, kebal terhadap hoaks, serta
+                            bijak dalam mengonsumsi dan menyebarkan informasi digital.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="about-card">
+                        <div class="icon-badge" style="background:var(--coral-color);"><i
+                                class="fa-solid fa-bullseye"></i></div>
+                        <h5>Misi</h5>
+                        <p>Menyediakan modul literasi digital berbasis sains kognitif, melatih keterampilan berpikir
+                            tingkat tinggi (<em>HOTS</em>), dan mendorong kewarganegaraan digital yang santun dan edukatif.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== LANDASAN AKADEMIS ===================== -->
+    <section id="landasan">
+        <div class="container">
+            <div class="text-center mx-auto reveal" style="max-width:600px;">
+                <span class="section-label"><i class="fa-solid fa-graduation-cap"></i> Landasan Ilmiah</span>
+                <h2 class="section-title">Tiga Landasan Akademis</h2>
+                <p class="section-sub mx-auto">Setiap materi Cakar Nalar dirancang dengan mengintegrasikan tiga
+                    kerangka ilmiah yang teruji.</p>
+            </div>
+            <div class="row g-4 mt-3 reveal">
+                <div class="col-md-4">
+                    <div class="pillar-card">
+                        <div class="pillar-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                        <h5>Pearson RED Model</h5>
+                        <p><i>Recognize Assumptions, Evaluate Information, Draw Conclusions</i> (Chartrand et al.,
+                            2012; Al-Khanaifsawy, 2023).</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="pillar-card">
+                        <div class="pillar-icon"><i class="fa-solid fa-layer-group"></i></div>
+                        <h5>Revised Bloom's Taxonomy</h5>
+                        <p>Dimensi Proses Kognitif (<em>Remembering</em> hingga <em>Creating</em>) &amp; Dimensi Pengetahuan (Anderson
+                            &amp; Krathwohl, 2001).</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="pillar-card">
+                        <div class="pillar-icon"><i class="fa-solid fa-globe"></i></div>
+                        <h5>UNESCO MIL Framework</h5>
+                        <p>8 Konsep Kunci Literasi Media, Deteksi Disinformasi, Algoritma &amp; <em>Digital Citizenship</em>
+                            (Wilson, 2019).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== PEMANDU BELAJAR (MASKOT) ===================== -->
+    <section id="pemandu" class="bg-soft">
+        <div class="container">
+            <div class="text-center mx-auto reveal" style="max-width:600px;">
+                <span class="section-label"><i class="fa-solid fa-users"></i> Kenalan Dulu</span>
+                <h2 class="section-title">Pemandu Belajarmu</h2>
+                <p class="section-sub mx-auto">Tiga karakter yang akan menemani setiap babnya, masing-masing
+                    membawa gaya berpikir kritis yang berbeda.</p>
+            </div>
+            <div class="row g-4 mt-3 reveal">
+                <div class="col-md-4">
+                    <div class="mascot-showcase">
+                        <div class="mascot-img-frame"><img src="assets/mascots/semut_tahu_mascot.png" alt="Semut Tahu"></div>
+                        <div class="mascot-showcase-body">
+                            <h5>Semut 'Tahu'</h5>
+                            <div class="role" style="color:var(--coral-color);">Penyelidik Fakta Dasar</div>
+                            <p>Membedakan fakta dari asumsi dan mengajarkan prinsip <em>Stop &amp; Think</em> sebelum
+                                percaya pada sebuah klaim.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mascot-showcase">
+                        <div class="mascot-img-frame"><img src="assets/mascots/robot_botis_mascot.png" alt="Robot Botis"></div>
+                        <div class="mascot-showcase-body">
+                            <h5>Robot 'Botis'</h5>
+                            <div class="role" style="color:var(--accent-color);">Teman Berpikir Digital</div>
+                            <p>Membedah keaslian konten digital lewat rumus verifikasi 5W+1H dan deteksi
+                                disinformasi.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mascot-showcase">
+                        <div class="mascot-img-frame"><img src="assets/mascots/kancil_cil_mascot.png" alt="Kancil Cil"></div>
+                        <div class="mascot-showcase-body">
+                            <h5>Kancil 'Cil'</h5>
+                            <div class="role" style="color:var(--amber-color);">Si Otak Gesit (<em>HOTS</em>)</div>
+                            <p>Melatih evaluasi argumen tingkat tinggi dan menghindari lompatan kesimpulan yang
+                                keliru.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CARA BELAJAR ===================== -->
+    <section id="cara-belajar">
+        <div class="container">
+            <div class="row align-items-center reveal">
+                <div class="col-lg-5 mb-4 mb-lg-0">
+                    <span class="section-label"><i class="fa-solid fa-route"></i> Alur Belajar</span>
+                    <h2 class="section-title">Enam Langkah Sederhana</h2>
+                    <p class="section-sub">Mulai dari mengukur kemampuan awal, belajar berurutan per bab, sampai
+                        tuntas semua materi dan final tryout.</p>
+                </div>
+                <div class="col-lg-7">
+                    <div class="step-item">
+                        <div class="step-num">1</div>
+                        <div>
+                            <h6>Daftar Akun</h6>
+                            <p>Buat akun peserta gratis dengan nama, email, dan kata sandi.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num">2</div>
+                        <div>
+                            <h6>Tes Diagnostik</h6>
+                            <p>Mengukur <em>baseline</em> kemampuan kognitif, tingkat kerentanan terhadap disinformasi, dan
+                                penguasaan awal penalaran kritis peserta sebelum modul pembelajaran dimulai.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num">3</div>
+                        <div>
+                            <h6>Pelajari Materi per Bab</h6>
+                            <p>Baca uraian materi yang dipandu tiga maskot, lengkap dengan studi kasus nyata
+                                Indonesia.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num">4</div>
+                        <div>
+                            <h6>Kerjakan Kuis</h6>
+                            <p>Uji pemahamanmu lewat kuis pilihan ganda yang langsung dinilai otomatis.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num">5</div>
+                        <div>
+                            <h6>Lulus &amp; Lanjut ke Bab Berikutnya</h6>
+                            <p>Skor minimal 70 membuka bab selanjutnya, sampai tuntas 6 bab.</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num">6</div>
+                        <div>
+                            <h6>Final Tryout</h6>
+                            <p>Setelah menuntaskan seluruh bab, uji pemahaman secara menyeluruh lewat tryout
+                                komprehensif untuk mengukur peningkatan nalar kritismu sejak tes diagnostik.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CTA ===================== -->
+    <section class="bg-soft">
+        <div class="container">
+            <div class="cta-section reveal">
+                <h2>Siap Jadi Warganet yang Lebih Kritis?</h2>
+                <p>Gratis, belajar dengan ritme sendiri, dan langsung dapat umpan balik dari tiap kuis.</p>
+                <button class="btn" id="cta-bottom-btn" onclick="openAuthModal('register')">Daftar Sekarang</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="row gy-4">
+                <div class="col-md-7">
+                    <div class="footer-brand-row">
+                        <div class="footer-logo-badge">
+                            <img src="assets/logo/logo-icon-transparent.png" alt="Cakar Nalar">
+                        </div>
+                        <div>
+                            <div class="footer-brand-name">Cakar Nalar</div>
+                            <div class="footer-tagline">Cerdas Berkarakter dan Nalar</div>
+                        </div>
+                    </div>
+                    <p class="footer-desc">Program pembelajaran berpikir kritis berbasis sains kognitif untuk
+                        remaja hingga masyarakat umum, membantu menyaring informasi dan melawan hoaks di ruang
+                        digital.</p>
+                </div>
+                <div class="col-md-5">
+                    <div class="footer-heading">Tautan Cepat</div>
+                    <div class="footer-links">
+                        <a href="#tentang" onclick="event.preventDefault(); scrollToSection('tentang')">Tentang</a>
+                        <a href="#landasan" onclick="event.preventDefault(); scrollToSection('landasan')">Landasan</a>
+                        <a href="#pemandu" onclick="event.preventDefault(); scrollToSection('pemandu')">Pemandu Belajar</a>
+                        <a href="#cara-belajar" onclick="event.preventDefault(); scrollToSection('cara-belajar')">Cara Belajar</a>
+                    </div>
+                </div>
+            </div>
+            <hr class="footer-divider">
+            <div class="footer-bottom">
+                Cakar Nalar © <span id="footer-year"></span>. Seluruh hak cipta dilindungi.
+            </div>
+        </div>
+    </footer>
+
+    <!-- ===================== MODAL AUTH ===================== -->
+    <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog auth-modal-dialog">
+            <div class="modal-content" style="border-radius:16px; border:none;">
+                <div class="modal-body p-4">
+                    <div class="d-flex justify-content-end mb-2">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                    </div>
+
+                    <div class="auth-tabs">
+                        <button type="button" class="auth-tab-btn active" id="tab-btn-login"
+                            onclick="switchTab('login')">Masuk</button>
+                        <button type="button" class="auth-tab-btn" id="tab-btn-register"
+                            onclick="switchTab('register')">Daftar</button>
+                    </div>
+
+                    <!-- Pembungkus kedua form (Masuk & Daftar) -- dipakai JS
+                         (initModalScrollLockFix / switchTab di main.js) untuk
+                         menganimasikan perpindahan tab (crossfade + tinggi
+                         menyesuaikan otomatis, karena Daftar jauh lebih
+                         panjang dari Masuk). -->
+                    <div class="auth-views-wrap" id="auth-views-wrap">
+                    <!-- FORM LOGIN -->
+                    <div class="auth-form-view active" id="view-login">
+                        <h4 class="fw-bold" style="color:var(--primary-color);">Selamat Datang Kembali</h4>
+                        <p class="section-sub mb-4">Masuk untuk melanjutkan pembelajaranmu.</p>
+
+                        <form id="form-login" novalidate>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <div class="input-icon-group">
+                                    <i class="fa-regular fa-envelope"></i>
+                                    <input type="email" class="form-control" id="login-email" required>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Kata Sandi</label>
+                                <div class="input-icon-group">
+                                    <i class="fa-solid fa-lock"></i>
+                                    <input type="password" class="form-control has-eye-icon" id="login-password" required>
+                                    <i class="fa-regular fa-eye cn-toggle-eye" data-target="login-password"></i>
+                                </div>
+                            </div>
+                            <div class="mb-4 auth-remember-check">
+                                <label class="auth-remember-label">
+                                    <input type="checkbox" id="login-remember">
+                                    Ingat saya di perangkat ini
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-auth-submit" id="btn-login-submit">
+                                <span class="btn-text">Masuk</span>
+                            </button>
+                        </form>
+                        <p class="text-center mt-3" style="font-size:13.5px;color:#8a8fa3;">
+                            Belum punya akun? <a href="#" onclick="switchTab('register'); return false;"
+                                style="color:var(--accent-color);font-weight:600;">Daftar di sini</a>
+                        </p>
+                    </div>
+
+                    <!-- FORM REGISTER -->
+                    <div class="auth-form-view" id="view-register">
+                        <h4 class="fw-bold" style="color:var(--primary-color);">Buat Akun Peserta</h4>
+                        <p class="section-sub mb-4">Daftar untuk mulai belajar bersama Cakar Nalar.</p>
+
+                        <form id="form-register" novalidate>
+                            <div class="mb-3">
+                                <label class="form-label">Nama Lengkap</label>
+                                <div class="input-icon-group">
+                                    <i class="fa-regular fa-user"></i>
+                                    <input type="text" class="form-control has-counter" id="register-name" maxlength="30" required>
+                                    <span class="cn-input-counter" id="register-name-counter">0/30</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <div class="input-icon-group">
+                                    <i class="fa-regular fa-envelope"></i>
+                                    <input type="email" class="form-control has-check-icon" id="register-email" placeholder="nama@email.com" required>
+                                    <i class="fa-solid fa-circle-check cn-input-check-icon" id="register-email-check"></i>
+                                </div>
+                                <div class="form-text cn-input-hint" id="register-email-hint"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Kata Sandi</label>
+                                <div class="input-icon-group">
+                                    <i class="fa-solid fa-lock"></i>
+                                    <input type="password" class="form-control has-eye-icon" id="register-password"
+                                        minlength="8" maxlength="30" required>
+                                    <i class="fa-regular fa-eye cn-toggle-eye" data-target="register-password"></i>
+                                </div>
+                                <div class="form-text cn-input-hint" id="register-password-hint">Minimal 8 karakter, kombinasi huruf & angka.</div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Konfirmasi Kata Sandi</label>
+                                <div class="input-icon-group">
+                                    <i class="fa-solid fa-lock"></i>
+                                    <input type="password" class="form-control has-check-icon"
+                                        id="register-password-confirm" maxlength="30" required>
+                                    <i class="fa-solid fa-circle-check cn-input-check-icon"
+                                        id="register-password-confirm-check"></i>
+                                </div>
+                                <div class="form-text cn-input-hint" id="register-password-confirm-hint"></div>
+                            </div>
+                            <button type="submit" class="btn btn-auth-submit" id="btn-register-submit">
+                                <span class="btn-text">Daftar</span>
+                            </button>
+                        </form>
+                        <p class="text-center mt-3" style="font-size:13.5px;color:#8a8fa3;">
+                            Sudah punya akun? <a href="#" onclick="switchTab('login'); return false;"
+                                style="color:var(--accent-color);font-weight:600;">Masuk di sini</a>
+                        </p>
+                    </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="back-to-top" id="backToTopBtn" onclick="scrollToTop()" aria-label="Kembali ke atas">
+        <svg class="back-to-top-ring" width="40" height="40" viewBox="0 0 40 40">
+            <circle class="ring-bg" cx="20" cy="20" r="17"></circle>
+            <circle class="ring-progress" id="backToTopRing" cx="20" cy="20" r="17"></circle>
+        </svg>
+        <i class="fa-solid fa-chevron-up"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/transition.js"></script>
+    <script src="js/main.js"></script>
+
+</body>
+
+</html>

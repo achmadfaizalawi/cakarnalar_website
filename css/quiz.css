@@ -1,0 +1,1809 @@
+/* ===================== HALAMAN SOAL (Diagnostik / Kuis Bab / Tryout) ===================== */
+/* Dipakai bersama oleh diagnostik.html, tryout.html, dan nanti kuis per bab. */
+
+.quiz-body {
+    background: var(--bg-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Footer disembunyikan dulu selagi soal masih dimuat (skeleton pendek),
+   supaya tidak sempat "kelihatan" lalu tiba-tiba pindah/menghilang begitu
+   soal aslinya (yang jauh lebih panjang) selesai dirender. Baru di-fade-in
+   secara halus lewat class .quiz-content-ready setelah kontennya stabil. */
+.quiz-body footer.site-footer {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.quiz-body.quiz-content-ready footer.site-footer {
+    opacity: 1;
+}
+
+.quiz-topbar {
+    background: #fff;
+    box-shadow: 0 2px 14px rgba(23, 51, 80, 0.06);
+    height: 68px;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    /* Elemen sticky + box-shadow kadang bikin browser "berkedip" (repaint)
+       waktu di-scroll -- paksa jadi layer GPU sendiri supaya mulus. */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+.quiz-topbar .container {
+    height: 100%;
+}
+
+.quiz-topbar .logo-img {
+    height: 38px;
+}
+
+.quiz-back-link {
+    color: var(--text-dark);
+    font-weight: 600;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.quiz-back-link:hover {
+    color: var(--accent-color);
+}
+
+/* --- Badge countdown batas waktu (opsional, diatur admin) --- */
+.quiz-timer-badge {
+    align-items: center;
+    gap: 8px;
+    background: rgba(12, 122, 110, 0.1);
+    color: var(--accent-color);
+    font-weight: 700;
+    font-size: 14px;
+    padding: 7px 16px;
+    border-radius: 30px;
+    white-space: nowrap;
+}
+
+.quiz-timer-badge.warning {
+    background: rgba(214, 69, 80, 0.12);
+    color: #d64550;
+}
+
+@media (max-width: 575.98px) {
+    .quiz-timer-badge span:not(#quiz-timer-text) {
+        display: none;
+    }
+
+    /* Layar kecil: sisakan panah "kembali" saja, teksnya disembunyikan */
+    .quiz-back-text {
+        display: none;
+    }
+}
+
+.quiz-main {
+    /* Disamakan dengan .dashboard-main di dashboard.html (980px) --
+       sebelumnya 760px, jadi di layar sedang/besar kontennya kelihatan
+       jauh lebih menjorok ke tengah dibanding topbar (yang lebar penuh
+       kayak halaman lain), padahal seharusnya sama-sama sejajar. Lebar
+       soal & kartu di dalamnya sendiri tetap dibatasi (lihat max-width
+       pada .quiz-question-card dkk kalau perlu), jadi teksnya tidak jadi
+       kepanjangan cuma karena kolomnya melebar. */
+    max-width: 980px;
+    /* Padding kiri-kanan disamakan dengan .container bawaan Bootstrap
+       (dipakai index.html & dashboard.html) -- 12px di layar biasa, dan
+       24px di layar kecil lewat override media query di bawah (lihat juga
+       aturan .container di css/style.css). */
+    padding: 32px 12px 140px;
+    margin: 0 auto;
+    width: 100%;
+    flex: 1 0 auto;
+}
+
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    .quiz-main {
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .quiz-main {
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+}
+
+.quiz-header {
+    margin-bottom: 26px;
+}
+
+.quiz-header h2 {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+}
+
+.quiz-header p {
+    color: #8a8fa3;
+    font-size: 14.5px;
+    margin: 0;
+}
+
+/* --- Loading skeleton sederhana --- */
+.quiz-loading {
+    text-align: center;
+    padding: 60px 0;
+    color: #8a8fa3;
+}
+
+.quiz-loading i {
+    font-size: 28px;
+    color: var(--accent-color);
+    margin-bottom: 12px;
+    display: block;
+}
+
+/* --- Kotak petunjuk pengerjaan Kuis per Bab (opsional, diisi admin) --- */
+.quiz-petunjuk-box {
+    background: #fff7e6;
+    border: 1.5px solid #f5deb3;
+    border-radius: 16px;
+    padding: 18px 22px;
+    margin-bottom: 18px;
+}
+
+.quiz-petunjuk-title {
+    font-weight: 700;
+    color: #8a5a00;
+    font-size: 13.5px;
+    margin-bottom: 8px;
+}
+
+.quiz-petunjuk-title i {
+    margin-right: 6px;
+}
+
+.quiz-petunjuk-text {
+    color: #6b4a00;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.quiz-petunjuk-text ul,
+.quiz-petunjuk-text ol {
+    margin: 8px 0 8px 20px;
+}
+
+/* --- Kartu soal --- */
+.quiz-question-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 20px rgba(23, 51, 80, 0.06);
+}
+
+/* Baris atas kartu soal: nomor soal di kiri, tombol "Tandai" di kanan. */
+.quiz-question-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.quiz-question-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 700;
+    font-size: 12.5px;
+    flex-shrink: 0;
+}
+
+/* Tombol "Tandai soal ini" -- dipakai peserta buat menandai soal yang
+   masih ragu-ragu/mau dicek lagi sebelum submit. Status tertandainya
+   ikut tampil di navigator (lihat .quiz-navigator-num.marked di bawah)
+   supaya peserta bisa lihat sekilas soal mana saja yang ditandai. */
+.quiz-question-mark-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f6f8fb;
+    border: 1.5px solid #e2e5ec;
+    color: #8a8fa3;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.quiz-question-mark-btn:hover {
+    border-color: #e0a000;
+    color: #b8860b;
+}
+
+.quiz-question-mark-btn.marked {
+    background: rgba(224, 160, 0, 0.12);
+    border-color: #e0a000;
+    color: #b8860b;
+}
+
+@media (max-width: 420px) {
+    /* Layar sangat sempit -- sisakan ikonnya saja, teks "Tandai" disembunyikan
+       supaya tombolnya tidak kepanjangan/menabrak nomor soal. */
+    .quiz-question-mark-label {
+        display: none;
+    }
+
+    .quiz-question-mark-btn {
+        padding: 6px 10px;
+    }
+}
+
+/* Kartu soal yang ditandai dikasih garis tepi kiri amber, supaya kelihatan
+   sekilas waktu scroll tanpa harus baca tombolnya satu-satu. */
+.quiz-question-card.marked {
+    box-shadow: 0 4px 20px rgba(23, 51, 80, 0.06), inset 3px 0 0 #e0a000;
+}
+
+.quiz-question-text {
+    font-weight: 500;
+    /* Sebelumnya pakai var(--primary-color) (#173350, navy gelap yang
+       sekilas kelihatan hitam) untuk SEMUA teks pertanyaan -- bedanya
+       cuma dari font-weight (500 vs 700), dan ternyata itu saja tidak
+       cukup terasa bedanya di font Poppins pada ukuran teks sekecil ini.
+       Sekarang teks DASAR (belum ditebalkan admin) pakai warna abu-abu
+       gelap yang lebih terang (--text-dark), sedangkan bagian yang
+       ditebalkan (<b>/<strong>, lihat aturan di bawah) tetap pakai warna
+       navy gelap ASLI + font-weight 700 -- jadi ada DUA pembeda sekaligus
+       (warna DAN ketebalan), bukan cuma satu, supaya jelas kelihatan mana
+       yang ditekankan admin dan mana yang tidak. */
+    color: var(--text-dark);
+    font-size: 15.5px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.quiz-question-text b,
+.quiz-question-text strong {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Pertanyaan, pilihan jawaban & penjelasan sekarang bisa berisi HTML dari
+   editor rich text (bold/italic/underline/daftar) di Panel Admin -- style
+   dasar buat tag daftar yang mungkin muncul di dalamnya. */
+.quiz-question-text ul,
+.quiz-question-text ol,
+.quiz-review-question ul,
+.quiz-review-question ol,
+.quiz-review-explanation-text ul,
+.quiz-review-explanation-text ol {
+    margin: 8px 0 8px 20px;
+}
+
+/* Reset margin bawaan tag <p> (dibuat otomatis oleh editor rich text di
+   Panel Admin waktu admin mengetik pertanyaan/pilihan/penjelasan, lihat
+   sanitizeRichHtmlQuiz/sanitizeRichHtmlAdmin) di semua tempat teks soal
+   ini ditampilkan ke peserta maupun admin. TANPA reset ini, margin
+   bawaan Bootstrap untuk <p> (margin-top:0, margin-bottom:1rem -- TIDAK
+   simetris) menambah ruang kosong TAK TERLIHAT di bawah teksnya, yang
+   ikut terhitung sebagai bagian dari "tinggi" elemen itu waktu
+   align-items:center menyejajarkan lingkaran huruf (A/B/C/D) di
+   .quiz-option/.quiz-review-opt -- akibatnya lingkaran hurufnya
+   kelihatan lebih naik ke atas dibanding tengah teks yang BENAR-BENAR
+   terlihat (bukan cuma soal pilihan -- .quiz-question-text/
+   .quiz-review-question/.quiz-review-explanation-text disamakan juga
+   di sini supaya tidak ada spasi ganda kalau isinya juga dibungkus
+   <p>). Margin cuma dikembalikan antar-paragraf (kalau admin sengaja
+   bikin lebih dari satu paragraf), bukan di sekeliling teksnya. */
+.quiz-question-text p,
+.quiz-option-text p,
+.quiz-review-question p,
+.quiz-review-opt-text p,
+.quiz-review-explanation-text p {
+    margin: 0;
+}
+
+.quiz-question-text p + p,
+.quiz-option-text p + p,
+.quiz-review-question p + p,
+.quiz-review-opt-text p + p,
+.quiz-review-explanation-text p + p {
+    margin-top: 8px;
+}
+
+/* Pertanyaan, pilihan jawaban & penjelasan sekarang juga bisa berisi
+   gambar/heading/link/tabel dari editor rich text yang diperluas di Panel
+   Admin (lihat sanitizeRichHtmlQuiz di js/quiz.js) -- style dasar buat
+   tag-tag tambahan itu di semua tempat teks soal ditampilkan ke peserta. */
+.quiz-question-text img,
+.quiz-option-text img,
+.quiz-review-question img,
+.quiz-review-explanation-text img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+    margin: 10px 0;
+    /* Bisa diklik untuk lihat versi lebih besar (lihat
+       initGambarLightboxQuiz di js/quiz.js) -- gambar di sini memang
+       sengaja mengecil menyesuaikan lebar kotaknya masing-masing. */
+    cursor: zoom-in;
+    transition: opacity 0.15s ease;
+}
+
+.quiz-question-text img:hover,
+.quiz-option-text img:hover,
+.quiz-review-question img:hover,
+.quiz-review-explanation-text img:hover {
+    opacity: 0.9;
+}
+
+/* Popup lightbox (SweetAlert2) buat lihat gambar soal/penjelasan ukuran
+   penuh -- dipanggil dari bukaLightboxGambarQuiz() waktu gambar diklik.
+   Warna latarnya sendiri sudah diatur lewat opsi "background" di
+   Swal.fire -- di sini cuma hilangkan bayangan kotak popup bawaan. */
+.quiz-lightbox-popup {
+    box-shadow: none !important;
+    position: relative !important;
+    /* Padding atas dilebihkan supaya ada ruang kosong buat tombol close
+       (posisinya digeser turun lewat aturan .swal2-close di bawah) --
+       supaya tombolnya tidak numpuk di atas gambar. */
+    padding-top: 2.75em !important;
+}
+
+/* Tombol close bawaan SweetAlert2 -- versi SweetAlert2 yang dipakai di
+   sini menaruhnya lewat CSS grid (position:static), BUKAN position:
+   absolute seperti versi lama, jadi kalau kontennya (gambar) pendek dia
+   ikut numpuk/tumpang-tindih dengan gambar. Dipaksa position:absolute di
+   sini supaya lepas dari grid & posisinya bisa diatur sendiri, jelas
+   TERPISAH di luar area gambar (bukan menutupi gambarnya). */
+.quiz-lightbox-popup .swal2-close {
+    position: absolute !important;
+    top: 6px !important;
+    right: 6px !important;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+}
+
+.quiz-lightbox-img {
+    display: block;
+    margin: 0 auto;
+    max-width: 90vw;
+    max-height: 80vh;
+    width: auto;
+    height: auto;
+    /* Gambar ditampilkan APA ADANYA (tidak diberi border-radius/efek
+       apapun di sudutnya) -- beda dengan tampilan kecilnya di teks soal
+       yang sengaja dikasih sudut membulat. */
+    object-fit: contain;
+}
+
+.quiz-question-text h2,
+.quiz-review-question h2,
+.quiz-review-explanation-text h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 10px 0 6px;
+}
+
+.quiz-question-text h3,
+.quiz-option-text h3,
+.quiz-review-question h3,
+.quiz-review-explanation-text h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 8px 0 5px;
+}
+
+.quiz-question-text a,
+.quiz-option-text a,
+.quiz-review-question a,
+.quiz-review-explanation-text a {
+    color: var(--accent-color);
+    text-decoration: underline;
+    word-break: break-word;
+}
+
+/* Tabel dibungkus div ".quiz-table-scroll" TERPISAH (dipasang otomatis
+   oleh bungkusTabelScrollQuiz() di js/quiz.js, bukan lewat CSS
+   "display:block" langsung di <table>) supaya scroll horizontal di layar
+   sempit tidak bikin lebar kolom <col> (dari initTableColumnResize() di
+   admin.js) diabaikan -- "display:block" pada <table> itu sendiri bikin
+   browser melepas tabelnya dari algoritma layout tabel, jadi lebar
+   kolomnya jadi menyusut ikut isi, bukan memenuhi lebar kartu soal. */
+.quiz-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 10px 0;
+}
+
+.quiz-question-text table,
+.quiz-option-text table,
+.quiz-review-question table,
+.quiz-review-explanation-text table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.quiz-question-text th,
+.quiz-question-text td,
+.quiz-option-text th,
+.quiz-option-text td,
+.quiz-review-question th,
+.quiz-review-question td,
+.quiz-review-explanation-text th,
+.quiz-review-explanation-text td {
+    border: 1px solid #e2e5ec;
+    padding: 6px 10px;
+    font-size: 13.5px;
+    text-align: left;
+    min-width: 70px;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.quiz-question-text th,
+.quiz-option-text th,
+.quiz-review-question th,
+.quiz-review-explanation-text th {
+    background: #f6f8fb;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.quiz-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.quiz-option:last-child {
+    margin-bottom: 0;
+}
+
+.quiz-option:hover {
+    border-color: var(--accent-color);
+}
+
+.quiz-option.selected {
+    border-color: var(--accent-color);
+    background: rgba(12, 122, 110, 0.06);
+}
+
+.quiz-option-letter {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #eef1f6;
+    color: var(--text-dark);
+    font-weight: 700;
+    font-size: 12.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.quiz-option.selected .quiz-option-letter {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.quiz-option-text {
+    font-size: 14.5px;
+    color: var(--text-dark);
+}
+
+/* --- Bar bawah (progres + tombol submit) --- */
+.quiz-footer-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #fff;
+    box-shadow: 0 -6px 24px rgba(23, 51, 80, 0.1);
+    padding: 16px 0;
+    z-index: 900;
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+.quiz-footer-bar .container {
+    max-width: 760px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.quiz-progress-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark);
+    white-space: nowrap;
+}
+
+.quiz-progress-bar-track {
+    flex: 1;
+    height: 6px;
+    background: #eef1f6;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 0 16px;
+}
+
+.quiz-progress-bar-fill {
+    height: 100%;
+    background: var(--accent-color);
+    border-radius: 6px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.quiz-submit-btn {
+    background: var(--accent-color);
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 11px 26px;
+    border-radius: 11px;
+    border: none;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+}
+
+.quiz-submit-btn:hover {
+    background: var(--primary-color);
+    color: #fff;
+}
+
+.quiz-submit-btn:disabled {
+    background: #d9dee8;
+    cursor: not-allowed;
+}
+
+@media (max-width: 575.98px) {
+    .quiz-progress-bar-track {
+        display: none;
+    }
+
+    .quiz-footer-bar .container {
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    /* Ringkas biar tombolnya tidak kepotong di layar sempit */
+    .quiz-progress-label {
+        display: none;
+    }
+
+    .quiz-submit-btn-prefix {
+        display: none;
+    }
+
+    .quiz-submit-btn {
+        padding: 11px 18px;
+        font-size: 13.5px;
+    }
+}
+
+@media (max-width: 340px) {
+    .quiz-footer-bar .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .quiz-progress-text {
+        font-size: 12px;
+    }
+
+    .quiz-submit-btn {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+}
+
+/* --- Kartu hasil / status terkunci --- */
+.quiz-result-card {
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 20px;
+    padding: 44px 32px;
+    text-align: center;
+    box-shadow: 0 6px 26px rgba(23, 51, 80, 0.08);
+}
+
+/* Ikon dekorasi transparan di kartu hasil (Tes Diagnostik, Kuis per Bab,
+   & Final Tryout, termasuk layar terkunci) -- biar tidak polos/sepi
+   begitu peserta sudah selesai. SEKARANG 3 ikon (ditebar, bukan cuma 1 di
+   pojok) -- markup-nya (3x <i> yang sama) dibangun lewat quizDecorHtml()
+   di js/quiz.js supaya konsisten di semua pemanggil, tinggal diposisikan
+   di sini lewat "i:nth-of-type". Elemen pembungkusnya SEKARANG menutupi
+   seluruh kartu ("inset:0", bukan cuma dibungkus flex di 1 titik) supaya
+   tiap ikon anaknya bisa diposisikan sendiri-sendiri lewat position:
+   absolute relatif ke kartu -- kartu induknya (.quiz-result-card) sudah
+   "overflow:hidden", jadi ikon yang numpang lewat tepi otomatis terpotong
+   rapi, tidak perlu di-clip manual di sini.
+   Ikon UTAMA (nth-of-type(1), pojok kanan bawah) mempertahankan pola lama
+   .sertifikat-decor di css/sertifikat.css (offset negatif KECIL dlm px,
+   bukan %, jaga-jaga suatu saat dicetak) tapi diperBESAR dari sebelumnya.
+   Ikon KEDUA & KETIGA ditebar di posisi lain (lebih kecil, opacity lebih
+   rendah, dimiringkan dikit) supaya berasa "ramai" tanpa mengganggu
+   keterbacaan konten di atasnya (z-index konten tetap menang, lihat
+   ".quiz-result-card>*:not(.quiz-result-decor)" di bawah).
+   Warnanya menyesuaikan status lewat class .abu/.merah/.kuning/.hijau
+   yang ditambahkan dari js/quiz.js. */
+.quiz-result-decor {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.quiz-result-decor i {
+    position: absolute;
+}
+
+.quiz-result-decor i:nth-of-type(1) {
+    right: -18px;
+    bottom: -18px;
+    font-size: min(23vw, 240px);
+    opacity: 0.09;
+}
+
+.quiz-result-decor i:nth-of-type(2) {
+    top: 6%;
+    right: 6%;
+    font-size: min(8vw, 78px);
+    opacity: 0.07;
+    transform: rotate(-14deg);
+}
+
+.quiz-result-decor i:nth-of-type(3) {
+    top: 12%;
+    left: 4%;
+    font-size: min(6vw, 52px);
+    opacity: 0.06;
+    transform: rotate(11deg);
+}
+
+.quiz-result-decor.abu i {
+    color: #8a8fa3;
+}
+
+.quiz-result-decor.merah i {
+    color: #d64550;
+}
+
+.quiz-result-decor.kuning i {
+    color: #e0a000;
+}
+
+.quiz-result-decor.hijau i {
+    color: #0C7A6E;
+}
+
+/* Konten asli kartu tetap di atas ikon dekorasi (cascade z-index, sama
+   pola dengan .sertifikat-border>*:not(.sertifikat-decor)). */
+.quiz-result-card>*:not(.quiz-result-decor) {
+    position: relative;
+    z-index: 1;
+}
+
+.quiz-result-icon {
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    background: rgba(12, 122, 110, 0.1);
+    color: var(--accent-color);
+    font-size: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.quiz-result-icon.locked {
+    background: #eef1f6;
+    color: #8a8fa3;
+}
+
+/* Ikon hasil Kuis per Bab yang BELUM lulus (lihat tampilkanHasilKuisBab
+   di js/quiz.js) -- merah, beda dari ikon "locked" (abu-abu netral) di
+   atas, supaya kelihatan jelas ini status "belum berhasil", bukan
+   "belum bisa diakses sama sekali". */
+.quiz-result-icon.gagal {
+    background: rgba(214, 69, 80, 0.1);
+    color: #d64550;
+}
+
+.quiz-result-card h3 {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+}
+
+.quiz-result-score {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin: 14px 0 6px;
+}
+
+.quiz-result-score.merah {
+    color: #d64550;
+}
+
+.quiz-result-score.kuning {
+    color: #e0a000;
+}
+
+.quiz-result-score.hijau {
+    color: #0C7A6E;
+}
+
+.quiz-result-card p.desc {
+    color: #8a8fa3;
+    font-size: 14.5px;
+    max-width: 420px;
+    margin: 0 auto 26px;
+}
+
+/* Di layar besar, kartunya sendiri sudah cukup lebar (lihat .quiz-main,
+   max-width 980px) -- 420px di atas jadi kelewat sempit untuk kalimat
+   pendek (mis. "Baseline kemampuan awalmu sudah tercatat. Selamat
+   belajar!"), jadi kepaksa bungkus ke 2 baris padahal ruangnya masih
+   longgar & keliatan aneh/timpang. Dilebarkan KHUSUS di layar >=640px
+   (layar kecil dibiarkan seperti semula -- di situ lebar kartunya sendiri
+   sudah dibatasi viewport, jadi 420px jarang jadi masalah). */
+@media (min-width: 640px) {
+    .quiz-result-card p.desc {
+        max-width: 700px;
+    }
+}
+
+.quiz-result-back-btn {
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 11px 28px;
+    border-radius: 11px;
+    border: none;
+    /* Ikon & teksnya (mis. "Ayo Mulai Belajar!"/"Lihat Laporan Lengkap"/
+       "Coba Lagi") sebelumnya cuma dipisah 1 spasi biasa di markup, jadi
+       kelihatan mepet -- disamakan dengan ".btn-bab-action" di
+       css/dashboard.css (tombol "Lihat Laporan Lengkap" yang sama di
+       Dashboard). */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.quiz-result-back-btn:hover {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+/* Baris dua tombol di hasil Kuis per Bab yang BELUM lulus: "Coba Lagi"
+   (utama) + "Kembali ke Dashboard" (sekunder, garis saja). */
+.quiz-result-btn-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.quiz-result-secondary-btn {
+    background: none;
+    color: var(--text-dark);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 11px 24px;
+    border-radius: 11px;
+    border: 1.5px solid #d9dee8;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.quiz-result-secondary-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* --- Riwayat percobaan Kuis per Bab (lihat renderRiwayatKuisBab di
+   js/quiz.js) -- daftar nilai & tanggal semua percobaan sebelumnya,
+   ditampilkan di bawah kartu "Belum Lulus -- Nx Percobaan". --- */
+.quiz-riwayat-list-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px 28px;
+    margin: 18px 0 0;
+    box-shadow: 0 6px 26px rgba(23, 51, 80, 0.08);
+}
+
+.quiz-riwayat-list-title {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 14px;
+}
+
+.quiz-riwayat-list-title i {
+    color: var(--accent-color);
+    margin-right: 6px;
+}
+
+.quiz-riwayat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+
+.quiz-riwayat-row:last-child {
+    margin-bottom: 0;
+}
+
+.quiz-riwayat-row-left,
+.quiz-riwayat-row-right {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.quiz-riwayat-row-right {
+    align-items: flex-end;
+    text-align: right;
+}
+
+.quiz-riwayat-attempt-num {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 13.5px;
+}
+
+.quiz-riwayat-date {
+    font-size: 12px;
+    color: #8a8fa3;
+}
+
+.quiz-riwayat-benar {
+    font-size: 12px;
+    color: #8a8fa3;
+}
+
+.quiz-riwayat-skor {
+    font-weight: 700;
+    color: #d64550;
+    font-size: 16px;
+}
+
+/* Percobaan yang skornya sendiri sudah mencapai nilai minimal (atau
+   bab-nya tidak punya nilai minimal) -- dipakai di dropdown "Riwayat
+   Percobaan" pada layar hasil yang sudah lulus, lihat buildRiwayatRowsHtml. */
+.quiz-riwayat-skor.lulus {
+    color: #0C7A6E;
+}
+
+@media (max-width: 420px) {
+    .quiz-riwayat-list-card {
+        padding: 20px 18px;
+    }
+
+    .quiz-riwayat-row {
+        flex-wrap: wrap;
+    }
+}
+
+/* --- Badge klasifikasi Paul & Elder Critical Thinking Stages --- */
+.quiz-klasifikasi-badge {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    text-align: left;
+    background: #f6f8fb;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin: 4px 0 26px;
+}
+
+.quiz-klasifikasi-badge i {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(12, 122, 110, 0.12);
+    color: var(--accent-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.quiz-klasifikasi-label {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 14.5px;
+    margin-bottom: 3px;
+}
+
+.quiz-klasifikasi-desc {
+    font-size: 13px;
+    color: #8a8fa3;
+    line-height: 1.5;
+}
+
+/* --- Variasi warna klasifikasi: merah (rendah) / kuning (sedang) / hijau (tinggi) --- */
+.quiz-klasifikasi-badge.merah {
+    background: rgba(214, 69, 80, 0.06);
+    border-color: rgba(214, 69, 80, 0.3);
+}
+
+.quiz-klasifikasi-badge.merah i {
+    background: rgba(214, 69, 80, 0.15);
+    color: #d64550;
+}
+
+.quiz-klasifikasi-badge.merah .quiz-klasifikasi-label {
+    color: #d64550;
+}
+
+.quiz-klasifikasi-badge.kuning {
+    background: rgba(224, 160, 0, 0.07);
+    border-color: rgba(224, 160, 0, 0.3);
+}
+
+.quiz-klasifikasi-badge.kuning i {
+    background: rgba(224, 160, 0, 0.18);
+    color: #b8860b;
+}
+
+.quiz-klasifikasi-badge.kuning .quiz-klasifikasi-label {
+    color: #b8860b;
+}
+
+.quiz-klasifikasi-badge.hijau {
+    background: rgba(12, 122, 110, 0.06);
+    border-color: rgba(12, 122, 110, 0.3);
+}
+
+.quiz-klasifikasi-badge.hijau i {
+    background: rgba(12, 122, 110, 0.15);
+    color: #0C7A6E;
+}
+
+.quiz-klasifikasi-badge.hijau .quiz-klasifikasi-label {
+    color: #0C7A6E;
+}
+
+/* --- Kartu terpisah: info rentang skor & kategorinya (di bawah kartu hasil) --- */
+.quiz-range-card {
+    text-align: left;
+    background: #fff;
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin: 20px 0 0;
+    box-shadow: 0 6px 26px rgba(23, 51, 80, 0.08);
+}
+
+.quiz-range-info-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+}
+
+.quiz-range-info-title-text i {
+    color: var(--accent-color);
+    margin-right: 6px;
+}
+
+.quiz-range-toggle-icon {
+    color: var(--text-dark, #566072);
+    font-size: 13px;
+    transition: transform 0.25s ease;
+}
+
+.quiz-range-card.collapsed .quiz-range-toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.quiz-range-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+    /* max-height DIKONTROL LEWAT JS (lihat toggleQuizRangeCard), diukur
+       dari scrollHeight konten sesungguhnya begitu dibuka -- bukan angka
+       tebakan tetap. Angka tebakan tetap (dulu 1200px) bisa memotong
+       konten yang ternyata lebih tinggi dari perkiraan (mis. di layar HP
+       sempit, teks bungkus jadi lebih banyak baris). 0 di sini cuma nilai
+       AWAL sebelum JS sempat mengukur/toggle. */
+    max-height: 0;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.25s ease, margin-top 0.3s ease;
+}
+
+.quiz-range-card.collapsed .quiz-range-list {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    pointer-events: none;
+}
+
+.quiz-range-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.quiz-range-item-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.quiz-range-badge {
+    flex-shrink: 0;
+    width: 62px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 12.5px;
+    padding: 4px 0;
+    border-radius: 8px;
+    background: #eef1f6;
+    color: var(--text-dark);
+}
+
+.quiz-range-label {
+    flex: 1;
+    font-size: 13.5px;
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.quiz-range-tag {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.quiz-range-desc {
+    margin: 0;
+    padding-left: 74px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-muted, #6b7684);
+}
+
+/* Kalimat pembuka "Skor total peserta dikelompokkan..." di rubrik
+   klasifikasi Final Tryout (lihat tampilkanHasilTryout di js/quiz.js)
+   -- Tes Diagnostik tidak punya ini, langsung ke daftar kategori. */
+.quiz-range-intro {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-muted, #6b7684);
+}
+
+.quiz-range-item.merah.active {
+    border-color: #d64550;
+    background: rgba(214, 69, 80, 0.06);
+}
+
+.quiz-range-item.merah.active .quiz-range-badge {
+    background: #d64550;
+    color: #fff;
+}
+
+.quiz-range-item.merah.active .quiz-range-tag {
+    background: rgba(214, 69, 80, 0.15);
+    color: #d64550;
+}
+
+.quiz-range-item.kuning.active {
+    border-color: #e0a000;
+    background: rgba(224, 160, 0, 0.07);
+}
+
+.quiz-range-item.kuning.active .quiz-range-badge {
+    background: #e0a000;
+    color: #fff;
+}
+
+.quiz-range-item.kuning.active .quiz-range-tag {
+    background: rgba(224, 160, 0, 0.18);
+    color: #b8860b;
+}
+
+.quiz-range-item.hijau.active {
+    border-color: #0C7A6E;
+    background: rgba(12, 122, 110, 0.06);
+}
+
+.quiz-range-item.hijau.active .quiz-range-badge {
+    background: #0C7A6E;
+    color: #fff;
+}
+
+.quiz-range-item.hijau.active .quiz-range-tag {
+    background: rgba(12, 122, 110, 0.15);
+    color: #0C7A6E;
+}
+
+@media (max-width: 420px) {
+    .quiz-range-card {
+        padding: 22px 18px;
+    }
+
+    .quiz-range-item {
+        position: relative;
+    }
+
+    .quiz-range-item-top {
+        flex-wrap: nowrap;
+    }
+
+    /* padding-right cuma perlu direservasi di kartu yang BENERAN punya
+       tag "Skormu" (kartu "active" -- lihat tampilkanHasilTryout di
+       js/quiz.js, tag-nya cuma dirender di kartu rentang skor peserta
+       saat ini). Sebelumnya padding ini dipasang ke SEMUA kartu rentang
+       (aktif maupun tidak) -- itu yang bikin label kartu LAIN (yang
+       sama sekali tidak punya tag, jadi ruang 72px itu kebuang percuma)
+       jadi kepepet sempit & teksnya kepotong jadi beberapa baris pendek
+       per kata, padahal ruang sebenarnya cukup longgar. */
+    .quiz-range-item.active .quiz-range-item-top {
+        padding-right: 72px;
+    }
+
+    .quiz-range-tag {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        margin-left: 0;
+    }
+
+    .quiz-range-desc {
+        padding-left: 0;
+    }
+}
+
+/* --- Kartu dropdown generik (dipakai buat "Riwayat Percobaan" &
+   "Pembahasan Jawaban" di layar hasil Kuis per Bab yang sudah lulus --
+   lihat tampilkanHasilKuisBab & toggleQuizCollapse di js/quiz.js). Pola
+   & animasinya sama persis dengan .quiz-range-card di atas, cuma
+   penamaannya generik supaya bisa dipakai untuk beberapa kartu berbeda
+   sekaligus dalam satu halaman. --- */
+.quiz-collapse-card {
+    text-align: left;
+    background: #fff;
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin: 20px 0 0;
+    box-shadow: 0 6px 26px rgba(23, 51, 80, 0.08);
+}
+
+.quiz-collapse-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+}
+
+.quiz-collapse-title-text i {
+    color: var(--accent-color);
+    margin-right: 6px;
+}
+
+.quiz-collapse-toggle-icon {
+    color: var(--text-dark, #566072);
+    font-size: 13px;
+    transition: transform 0.25s ease;
+}
+
+.quiz-collapse-card.collapsed .quiz-collapse-toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.quiz-collapse-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+    /* max-height DIKONTROL LEWAT JS (lihat toggleQuizCollapse), diukur
+       dari scrollHeight konten sesungguhnya begitu dibuka -- bukan angka
+       tebakan tetap. Ini yang tadinya bikin "Pembahasan Jawaban" kepotong
+       di HP: kontennya (banyak soal + opsi yang bisa berbaris panjang di
+       layar sempit) ternyata lebih tinggi dari angka tebakan tetap yang
+       dipakai sebelumnya. 0 di sini cuma nilai AWAL sebelum JS sempat
+       mengukur/toggle. */
+    max-height: 0;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.25s ease, margin-top 0.3s ease;
+}
+
+.quiz-collapse-card.collapsed .quiz-collapse-body {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    pointer-events: none;
+}
+
+@media (max-width: 420px) {
+    .quiz-collapse-card {
+        padding: 22px 18px;
+    }
+}
+
+/* --- Pembahasan (review) setelah submit --- */
+.quiz-review-heading {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 30px 0 14px;
+    font-size: 16px;
+}
+
+.quiz-review-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 18px rgba(23, 51, 80, 0.06);
+    border-left: 4px solid #d9dee8;
+}
+
+.quiz-review-card.benar {
+    border-left-color: var(--accent-color);
+}
+
+/* Khusus dropdown "Pembahasan Jawaban" di layar hasil Kuis per Bab yang
+   sudah lulus (lihat tampilkanHasilKuisBab) -- warnanya dibalik dari
+   biasanya: kartu soal jadi abu-abu muda, kotak "Penyelesaian" di
+   dalamnya jadi putih, supaya kotak penyelesaiannya lebih menonjol
+   sebagai bagian yang beda dari isi soal/opsi di atasnya. Tes Diagnostik/
+   Tryout (renderQuizDone) TIDAK ikut berubah -- di sana pembahasan masih
+   pakai kartu putih di atas latar halaman seperti semula. */
+#quiz-pembahasan-collapse .quiz-review-card {
+    background: #f6f8fb;
+    box-shadow: none;
+    border: 1px solid #e2e5ec;
+    border-left: 4px solid #d9dee8;
+}
+
+#quiz-pembahasan-collapse .quiz-review-card.benar {
+    border-left-color: var(--accent-color);
+}
+
+#quiz-pembahasan-collapse .quiz-review-card.salah {
+    border-left-color: #d64550;
+}
+
+#quiz-pembahasan-collapse .quiz-review-explanation {
+    background: #fff;
+}
+
+.quiz-review-card.salah {
+    border-left-color: #d64550;
+}
+
+.quiz-review-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.quiz-review-badge {
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.quiz-review-badge.benar {
+    background: rgba(12, 122, 110, 0.12);
+    color: var(--accent-color);
+}
+
+.quiz-review-badge.salah {
+    background: rgba(214, 69, 80, 0.12);
+    color: #d64550;
+}
+
+.quiz-review-number {
+    font-size: 12px;
+    color: #8a8fa3;
+    font-weight: 600;
+}
+
+.quiz-review-question {
+    font-weight: 500;
+    /* Sama seperti .quiz-question-text -- teks dasar pakai warna abu-abu
+       gelap yang lebih terang, bagian tebal pakai navy gelap + 700, biar
+       ada pembeda warna DAN ketebalan, bukan cuma ketebalan saja. */
+    color: var(--text-dark);
+    font-size: 14.5px;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.quiz-review-question b,
+.quiz-review-question strong {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.quiz-review-answer-row {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: 13.5px;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+}
+
+/* --- Daftar pilihan A/B/C/D di pembahasan, dengan penanda kunci & jawaban peserta --- */
+.quiz-review-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+/* Dulu CSS Grid 2-baris (baris ke-2 buat tag "Jawaban Peserta
+   (Benar)"/dst di bawah teks) -- tag itu sendiri sudah dihilangkan dari
+   JS (quiz.js & admin.js, lihat komentar "SENGAJA tidak dipakai lagi"
+   di renderQuizReviewOptions/monitorRenderPembahasanHtml), tapi baris
+   grid ke-2 ("tag") + row-gap di antara baris 1 & 2 masih ke-reservasi
+   walau elemennya sendiri sudah tidak pernah dirender lagi -- akibatnya
+   ada spasi kosong TAK TERLIHAT di bawah teks (row-gap tanpa isi),
+   bikin jarak ke tepi bawah card lebih lebar daripada ke tepi atas.
+   Balik ke flex 1 baris biasa (sama seperti .quiz-option) supaya
+   tinggi card cuma mengikuti tinggi teksnya, jarak atas & bawah simetris
+   lagi. ".quiz-review-opt-tag" sengaja masih dibiarkan ada di bawah
+   (aturan warnanya ikut opt-benar/opt-salah) kalau-kalau suatu saat
+   tag itu dipakai lagi -- tapi TIDAK dirender oleh JS manapun saat ini,
+   jadi tidak memengaruhi tata letak. */
+.quiz-review-opt {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.quiz-review-opt-letter {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #eef1f6;
+    color: var(--text-dark);
+    font-weight: 700;
+    font-size: 11.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.quiz-review-opt-text {
+    font-size: 13.5px;
+    color: var(--text-dark);
+}
+
+.quiz-review-opt-tag {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: normal;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-align: right;
+    max-width: 100%;
+}
+
+.quiz-review-opt.opt-benar {
+    border-color: var(--accent-color);
+    background: rgba(12, 122, 110, 0.06);
+}
+
+.quiz-review-opt.opt-benar .quiz-review-opt-letter {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.quiz-review-opt.opt-benar .quiz-review-opt-tag {
+    background: rgba(12, 122, 110, 0.15);
+    color: var(--accent-color);
+}
+
+.quiz-review-opt.opt-salah {
+    border-color: #d64550;
+    background: rgba(214, 69, 80, 0.06);
+}
+
+.quiz-review-opt.opt-salah .quiz-review-opt-letter {
+    background: #d64550;
+    color: #fff;
+}
+
+.quiz-review-opt.opt-salah .quiz-review-opt-tag {
+    background: rgba(214, 69, 80, 0.15);
+    color: #d64550;
+}
+
+.quiz-review-explanation {
+    background: #f6f8fb;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    color: var(--text-dark);
+    line-height: 1.55;
+    margin-top: 14px;
+}
+
+.quiz-review-explanation-title {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 6px;
+}
+
+.quiz-review-explanation-title i,
+.quiz-review-explanation > i {
+    color: var(--amber-color);
+    margin-right: 6px;
+}
+
+.quiz-review-explanation-text {
+    color: var(--text-dark);
+}
+
+/* --- Navigator soal mengambang di pojok kanan-bawah, di atas bar progres --- */
+/* Sebelumnya diposisikan mengambang di TENGAH sisi kanan layar (top:50%) di
+   layar besar, lalu dipindah lewat JS ke berbagai tempat tergantung lebar
+   konten (lihat riwayat komentar & fungsi adjustQuizNavigatorLayout yang
+   SUDAH DIHAPUS di js/quiz.js) -- pendekatan itu ternyata rapuh: gampang
+   kepotong/tabrakan sama scrollbar asli browser di berbagai kombinasi lebar
+   layar & konten, dan sulit ditebak persis kapan kejadiannya.
+   Disederhanakan: SELALU taruh di pojok kanan-bawah, tepat di atas
+   .quiz-footer-bar (bar progres "X dari Y soal terjawab"), sama untuk semua
+   ukuran layar -- posisinya jadi konsisten & jauh dari tepi konten, jadi
+   tidak perlu lagi terka-terka lebar scrollbar sama sekali. */
+.quiz-navigator {
+    position: fixed;
+    bottom: 96px;
+    right: 16px;
+    z-index: 950;
+    display: flex;
+    /* "flex-end" (bukan flex-start) -- supaya tombol bulatnya TETAP di
+       titik yang sama (nempel ke bagian BAWAH baris ini, yang posisinya
+       sendiri tetap karena dipatok "bottom: 96px" di atas) walau tinggi
+       panel di sampingnya berubah-ubah waktu animasi buka/tutup. Kalau
+       pakai flex-start, tombolnya malah ikut geser turun-naik mengikuti
+       tinggi panel yang sedang menyusut/membesar -- itu yang bikin
+       animasinya kelihatan "kurang smooth" (ada dua gerakan sekaligus:
+       panel menyempit DAN tombolnya bergeser vertikal). */
+    align-items: flex-end;
+    gap: 10px;
+    max-width: calc(100vw - 32px);
+}
+
+.quiz-navigator-toggle-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    box-shadow: 0 8px 22px rgba(23, 51, 80, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.quiz-navigator-toggle-btn:hover {
+    background: var(--accent-color);
+}
+
+/* Elemen luar ini yang di-animasikan (max-width -> 0) supaya panel "menutup
+   ke samping". Lebar konten di dalamnya (.quiz-navigator-panel-inner) dibuat
+   tetap (fixed), supaya grid nomor soal di dalamnya tidak ikut menyempit
+   dan reflow jadi kolom tinggi menjulang saat proses menutup. */
+.quiz-navigator-panel {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 32px rgba(23, 51, 80, 0.14);
+    overflow: hidden;
+    max-width: 208px;
+    max-height: 62vh;
+    opacity: 1;
+    /* Ketiga properti ini (lebar, tinggi, transparansi) sekarang dianimasikan
+       BARENG dengan durasi & kurva kecepatan yang SAMA PERSIS -- sebelumnya
+       "max-height" tidak ikut masuk daftar transition sama sekali, jadi
+       tingginya langsung "lompat" seketika ke 0/62vh sementara lebar &
+       opacity-nya masih pelan-pelan animasi -- itu salah satu penyebab
+       animasinya kelihatan patah-patah/kurang smooth. cubic-bezier di bawah
+       ("ease-out" yang melambat di akhir) juga terasa lebih halus untuk
+       animasi memperbesar/memperkecil dibanding "ease" bawaan. */
+    transition: max-width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+        max-height 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.22s ease;
+}
+
+.quiz-navigator.minimized .quiz-navigator-panel {
+    max-width: 0;
+    /* max-height juga di-nolkan (bukan cuma max-width) -- kalau tidak,
+       tinggi kotak ini tetap mengikuti tinggi konten di dalamnya (yang
+       lebarnya tetap 208px lewat .quiz-navigator-panel-inner) walau
+       lebarnya sendiri sudah 0 dan tak kelihatan. Akibatnya elemen
+       pembungkus .quiz-navigator (flex row) ikut terhitung setinggi itu,
+       yang bikin perhitungan posisi (mis. "bottom: 96px") jadi meleset
+       jauh dari tombolnya sendiri. */
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.quiz-navigator-panel-inner {
+    width: 208px;
+    max-height: 62vh;
+    overflow-y: auto;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.quiz-navigator-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+}
+
+/* Lebar mengikuti kolom grid (bukan px tetap) + aspect-ratio 1:1 supaya
+   selalu pas dengan padding panel, tidak peduli berapa banyak kolom atau
+   lebar panel saat ini -- jadi nomor terakhir tidak pernah mepet/kepotong. */
+.quiz-navigator-num {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    background: #eef1f6;
+    color: var(--text-dark);
+    font-weight: 700;
+    font-size: 12.5px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.quiz-navigator-num:hover {
+    transform: translateY(-1px);
+}
+
+.quiz-navigator-num.answered {
+    background: #2F6FED;
+    color: #fff;
+}
+
+/* Titik kuning di pojok kanan-atas nomor -- penanda soal ini "ditandai"
+   peserta (lihat toggleTandaiSoal di js/quiz.js). Sengaja dibuat sebagai
+   titik kecil TERPISAH dari warna latar nomor (bukan mengganti warna latar
+   sepenuhnya), supaya status "sudah dijawab" (biru) & "ditandai" (titik
+   kuning) bisa kelihatan BERSAMAAN kalau soalnya kebetulan keduanya. */
+.quiz-navigator-num.marked::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #e0a000;
+    border: 1.5px solid #fff;
+}
+
+.quiz-navigator-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 12px;
+    font-size: 11.5px;
+    color: #8a8fa3;
+}
+
+.quiz-navigator-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.quiz-navigator-legend-dot.answered {
+    background: #2F6FED;
+}
+
+.quiz-navigator-legend-dot.unanswered {
+    background: #eef1f6;
+    border: 1px solid #d9dee8;
+}
+
+.quiz-navigator-legend-dot.marked {
+    border-radius: 50%;
+    background: #e0a000;
+}
+
+.quiz-navigator-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #eef1f6;
+}
+
+.quiz-navigator-page-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1.5px solid #e2e5ec;
+    background: #fff;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.quiz-navigator-page-btn:hover:not(:disabled) {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.quiz-navigator-page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.quiz-navigator-page-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+@media (max-width: 991.98px) {
+    /* Posisi (bottom-right) sudah sama untuk semua ukuran layar lewat
+       aturan dasar .quiz-navigator di atas -- di sini tinggal ukurannya
+       saja yang diperkecil supaya lebih pas di layar sempit. */
+
+    .quiz-navigator-panel {
+        max-width: 168px;
+    }
+
+    .quiz-navigator-panel-inner {
+        width: 168px;
+        max-height: 44vh;
+    }
+
+    .quiz-navigator.minimized .quiz-navigator-panel {
+        max-width: 0;
+    }
+
+    .quiz-navigator-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 420px) {
+    .quiz-navigator-panel {
+        max-width: 148px;
+    }
+
+    .quiz-navigator-panel-inner {
+        width: 148px;
+        max-height: 40vh;
+        padding: 12px;
+    }
+
+    .quiz-navigator.minimized .quiz-navigator-panel {
+        max-width: 0;
+    }
+
+    .quiz-navigator-toggle-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 14.5px;
+    }
+
+    .quiz-navigator-num {
+        font-size: 11.5px;
+    }
+}

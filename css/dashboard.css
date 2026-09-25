@@ -1,0 +1,732 @@
+/* ===================== DASHBOARD CAKAR NALAR ===================== */
+
+.dashboard-body {
+    background: var(--bg-color);
+    min-height: 100vh;
+}
+
+.dashboard-main {
+    max-width: 980px;
+    padding-top: 32px;
+    padding-bottom: 60px;
+}
+
+.topbar-user {
+    /* Tinggi total chip ini disengaja disamakan dengan tombol navbar
+       di index.html (~38-39px), supaya tinggi navbar & posisi logo
+       konsisten persis di kedua halaman. Jangan diperbesar tanpa
+       menyesuaikan ulang .topbar-avatar. */
+    background: #f3f6fa;
+    padding: 5px 14px 5px 5px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.topbar-user:hover,
+.topbar-user:focus-visible {
+    background: #e6ebf3;
+}
+
+.topbar-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.topbar-username {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--primary-color);
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ===================== WELCOME CARD ===================== */
+.welcome-card {
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 20px;
+    padding: 30px 32px;
+    box-shadow: 0 6px 26px rgba(23, 51, 80, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 26px 0 40px;
+    flex-wrap: wrap;
+}
+
+/* Ikon dekoratif mengambang di latar kartu sambutan -- SENGAJA cuma
+   watermark tipis (opacity rendah) & pointer-events:none, supaya kartu
+   ini tidak polos tapi tetap tidak mengganggu keterbacaan teks/ring
+   progres yang berada di atasnya (lihat z-index di .welcome-text &
+   .welcome-progress di bawah). */
+.welcome-decor {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.welcome-decor i {
+    position: absolute;
+    color: var(--accent-color);
+}
+
+.welcome-decor i:nth-child(1) {
+    font-size: 130px;
+    right: -24px;
+    top: -34px;
+    opacity: 0.07;
+    transform: rotate(-12deg);
+}
+
+.welcome-decor i:nth-child(2) {
+    font-size: 54px;
+    right: 168px;
+    bottom: -16px;
+    color: var(--primary-color);
+    opacity: 0.06;
+    transform: rotate(14deg);
+}
+
+.welcome-decor i:nth-child(3) {
+    font-size: 40px;
+    right: 46px;
+    top: 18px;
+    opacity: 0.09;
+    transform: rotate(-8deg);
+}
+
+@media (max-width: 575.98px) {
+    .welcome-decor i:nth-child(2) {
+        display: none;
+    }
+}
+
+/* Warna ikon dekoratif & ring progres kartu sambutan SENGAJA ikut
+   berubah sesuai progres keseluruhan (persen dari renderProgress()) --
+   SAMA POLA dengan watermark kartu Bab/Diagnostik/Tryout (lihat
+   .card-decor di atas): abu-abu kalau belum mulai sama sekali, amber
+   kalau masih di tengah jalan, teal kalau sudah 100%. Class
+   progress-none/progress-mid/progress-complete ditulis JS ke
+   #welcome-card (lihat renderProgress() di js/dashboard.js). Selector
+   ini SENGAJA 3 class (lebih spesifik dari .welcome-decor
+   i:nth-child(2) yang punya warna navy sendiri) supaya menang & ikon
+   ke-2 pun ikut berubah warna, bukan cuma 2 dari 3 ikon. */
+.welcome-card.progress-none .welcome-decor i {
+    color: #b9c0cf;
+}
+
+.welcome-card.progress-mid .welcome-decor i {
+    color: var(--amber-color);
+}
+
+.welcome-card.progress-complete .welcome-decor i {
+    color: var(--accent-color);
+}
+
+/* Baris tombol CTA kartu sambutan -- isinya SATU tombol yang berubah-ubah
+   mengikuti tahap yang lagi aktif (lihat renderWelcomeCta() di
+   js/dashboard.js): "Mulai/Lanjutkan Tes Diagnostik" di awal, "Lanjutkan
+   Belajar" selama masih ada bab yang belum lulus, "Mulai/Lanjutkan Final
+   Tryout" begitu semua bab lulus, sampai akhirnya "Lihat Laporan Lengkap"
+   begitu progres keseluruhan 100%. flex-basis:100% supaya baris ini
+   SELALU turun ke baris baru di bawah teks sambutan & ring progres
+   (.welcome-card sendiri sudah flex-wrap:wrap), bukan berdesakan di
+   sebelah ring yang sempit. */
+.welcome-cta-actions {
+    /* display:none default -- sengaja BUKAN "flex", supaya kotak kosong
+       (sebelum renderWelcomeCta() sempat mengisi & menampilkannya lewat
+       JS) tidak sempat kelihatan sekilas sebagai baris kosong + garis
+       pembatas atas tanpa isi. JS yang mengganti jadi "flex" begitu
+       tombolnya sudah terpasang. */
+    display: none;
+    position: relative;
+    z-index: 1;
+    flex: 1 1 100%;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    padding-top: 20px;
+    border-top: 1px solid #eef1f6;
+}
+
+.welcome-card.progress-none .progress-ring-fg {
+    stroke: #b9c0cf;
+}
+
+.welcome-card.progress-mid .progress-ring-fg {
+    stroke: var(--amber-color);
+}
+
+.welcome-card.progress-complete .progress-ring-fg {
+    stroke: var(--accent-color);
+}
+
+.welcome-text {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-width: 240px;
+}
+
+.welcome-progress {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.progress-ring-wrap {
+    position: relative;
+    width: 86px;
+    height: 86px;
+}
+
+.progress-ring-bg {
+    fill: none;
+    stroke: #eef1f6;
+    stroke-width: 7;
+}
+
+.progress-ring-fg {
+    fill: none;
+    stroke: var(--accent-color);
+    stroke-width: 7;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 0.6s cubic-bezier(0.25, 0.8, 0.25, 1), stroke 0.3s ease;
+}
+
+.progress-ring-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--primary-color);
+}
+
+.progress-caption {
+    font-size: 12.5px;
+    color: #8a8fa3;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ===================== STAGE HEADING ===================== */
+.stage-heading {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 14px;
+}
+
+/* ===================== KARTU UMUM (Diagnostik / Tryout) ===================== */
+.stage-card {
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 16px;
+    padding: 22px 26px;
+    box-shadow: 0 4px 20px rgba(23, 51, 80, 0.07);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border-left: 5px solid #d9dee8;
+    flex-wrap: wrap;
+}
+
+/* Ikon dekoratif watermark -- dipakai bersama di .stage-card (Tes
+   Diagnostik & Final Tryout) & .bab-card (kartu per bab), SAMA POLA
+   dengan .welcome-decor -- tipis (opacity rendah), pointer-events:none,
+   & selalu ikon yang SAMA dengan tema kartunya (mis. fa-flask buat
+   Diagnostik, fa-trophy buat Tryout, fa-book-open buat tiap bab)
+   supaya berasa jadi satu bahasa visual, bukan asal tempel. Elemen lain
+   di dalam kartu ini (.stage-icon, .stage-body, tombol, .bab-card-top,
+   dst) SENGAJA diberi position:relative & z-index:1 di bawah supaya
+   tetap kebaca di atas watermark-nya.
+
+   Warnanya SENGAJA ikut berubah sesuai status kartu, senada dengan
+   badge/ikon di depannya (.stage-icon, .status-badge) -- abu-abu kalau
+   terkunci, amber kalau terbuka/belum selesai, teal kalau sudah
+   lulus/selesai -- supaya watermark-nya juga ikut jadi sinyal status
+   sekilas, bukan cuma hiasan statis. Default abu-abu (senada
+   .stage-icon polos/.bab-number-badge terkunci) dipakai buat kartu yang
+   TIDAK punya salah satu class status-open/status-done/status-lulus
+   (kartu Final Tryout versi "Masih Terkunci" tidak diberi class apapun
+   -- lihat renderTryout()). */
+.card-decor {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.card-decor i {
+    position: absolute;
+    right: -14px;
+    bottom: -22px;
+    font-size: 96px;
+    color: #b9c0cf;
+    opacity: 0.1;
+    transform: rotate(-12deg);
+    transition: color 0.3s ease;
+}
+
+.stage-card.status-open .card-decor i,
+.bab-card.status-open .card-decor i {
+    color: var(--amber-color);
+}
+
+.stage-card.status-done .card-decor i,
+.bab-card.status-lulus .card-decor i {
+    color: var(--accent-color);
+}
+
+.stage-card > *:not(.card-decor) {
+    position: relative;
+    z-index: 1;
+}
+
+.stage-card.status-open {
+    border-left-color: var(--amber-color);
+}
+
+.stage-card.status-done {
+    border-left-color: var(--accent-color);
+}
+
+.stage-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    color: #fff;
+    background: #b9c0cf;
+    flex-shrink: 0;
+}
+
+.stage-card.status-open .stage-icon {
+    background: var(--amber-color);
+}
+
+.stage-card.status-done .stage-icon {
+    background: var(--accent-color);
+}
+
+.stage-body {
+    flex: 1;
+    min-width: 180px;
+}
+
+.stage-body h6 {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 3px;
+}
+
+.stage-body p {
+    font-size: 13.5px;
+    color: #8a8fa3;
+    margin: 0;
+}
+
+.stage-score {
+    font-weight: 700;
+    color: var(--accent-color);
+    font-size: 14px;
+}
+
+/* ===================== KARTU BAB ===================== */
+.bab-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 4px 20px rgba(23, 51, 80, 0.07);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-top: 4px solid #d9dee8;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Watermark-nya lebih kecil & posisinya SENGAJA di tengah (bukan pojok
+   bawah-kanan seperti .stage-card) -- kartu bab ini sempit & pojok
+   atas-kanan sudah dipakai status-badge, pojok bawah-kanan sudah dipakai
+   tombol aksi, jadi kalau ikonnya ditaruh di salah satu pojok itu malah
+   ketutupan/kehalang elemen lain. Diposisikan mengambang di belakang
+   area ringkasan (yang lebih lapang) supaya selalu kelihatan di kartu
+   manapun (lulus/terbuka/terkunci), terlepas dari tinggi kontennya. */
+.bab-card .card-decor i {
+    right: -10px;
+    top: 50%;
+    bottom: auto;
+    font-size: 70px;
+    transform: translateY(-50%) rotate(-12deg);
+}
+
+.bab-card > *:not(.card-decor) {
+    position: relative;
+    z-index: 1;
+}
+
+.bab-card.status-open {
+    border-top-color: var(--amber-color);
+}
+
+.bab-card.status-lulus {
+    border-top-color: var(--accent-color);
+}
+
+.bab-card:not(.status-locked):hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 30px rgba(23, 51, 80, 0.12);
+}
+
+.bab-card.status-locked {
+    opacity: 0.62;
+}
+
+.bab-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.bab-number-badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.bab-card.status-locked .bab-number-badge {
+    background: #b9c0cf;
+}
+
+.status-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.status-badge.locked {
+    background: #eef1f6;
+    color: #8a8fa3;
+}
+
+.status-badge.open {
+    background: rgba(217, 138, 43, 0.12);
+    color: var(--amber-color);
+}
+
+.status-badge.lulus {
+    background: rgba(12, 122, 110, 0.12);
+    color: var(--accent-color);
+}
+
+.bab-card h6 {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0;
+    font-size: 15px;
+}
+
+.bab-card p.bab-ringkasan {
+    font-size: 13px;
+    color: #8a8fa3;
+    margin: 0;
+    flex: 1;
+}
+
+.bab-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+}
+
+/* Kalau isi footer-nya CUMA tombol sendirian (kartu "Terkunci" & yang
+   masih "Terbuka"/proses belajar -- lihat renderBabList() di
+   js/dashboard.js, keduanya TIDAK ikut me-render <span class="bab-skor">
+   sama sekali), "justify-content: space-between" di atas otomatis
+   menaruh satu-satunya elemen itu di paling KIRI (bukan efek apa-apa
+   kalau cuma 1 anak) -- jadi tombolnya "geser" ke kiri dibanding kartu
+   yang sudah "Lulus" (skor di kiri, tombol di kanan lewat
+   space-between). "margin-left: auto" di sini memaksa tombolnya tetap
+   menempel di kanan bawah SAMA seperti kartu yang sudah lulus, supaya
+   posisinya konsisten di ketiga status (terkunci/proses/lulus), tidak
+   ikut pindah-pindah. */
+.bab-card-footer .btn-bab-action:only-child {
+    margin-left: auto;
+}
+
+.bab-skor {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.btn-bab-action {
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 9px;
+    border: none;
+    transition: background 0.2s ease;
+    /* Sebelumnya tidak ada gap sama sekali -- ikon dan teksnya cuma
+       dipisah satu spasi biasa di markup, jadi kelihatan mepet/aneh
+       begitu tombolnya jadi cukup lebar (mis. "Lihat Laporan Lengkap").
+       display:inline-flex + gap dipasang di sini (bukan di satu tombol
+       saja) supaya konsisten ke semua tombol ikon+teks yang pakai
+       class ini di seluruh halaman. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-bab-action:hover {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.btn-bab-action:disabled,
+.bab-card.status-locked .btn-bab-action {
+    background: #d9dee8;
+    color: #fff;
+    cursor: not-allowed;
+}
+
+/* Varian outline/secondary dari .btn-bab-action -- dipakai tombol
+   "Lihat Laporan Lengkap" di kartu sambutan supaya "Unduh Sertifikat"
+   (aksi utama) tetap lebih menonjol. */
+.btn-bab-action-outline {
+    background: #fff;
+    color: var(--primary-color);
+    border: 1.5px solid #d9dee8;
+}
+
+.btn-bab-action-outline:hover {
+    background: #f8f9fc;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+@media (min-width: 768px) {
+    .bab-list-col {
+        max-width: 33.3333%;
+        flex: 0 0 33.3333%;
+    }
+}
+
+/* ===================== MENU HAMBURGER (layar < 992px) ===================== */
+.dash-mobile-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    background: #f3f6fa;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.dash-mobile-user .topbar-username {
+    font-size: 15px;
+    max-width: none;
+    flex: 1;
+}
+
+.dash-mobile-logout {
+    width: 100%;
+}
+
+/* ===================== MODAL EDIT PROFIL (SweetAlert2) ===================== */
+.cn-editprofil-form {
+    text-align: left;
+    margin-top: 6px;
+}
+
+.cn-editprofil-label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-dark, #333);
+    margin: 14px 0 4px;
+}
+
+.cn-editprofil-label:first-child {
+    margin-top: 0;
+}
+
+.cn-editprofil-form .swal2-input {
+    margin: 0;
+    width: 100%;
+    height: 42px;
+    font-size: 14px;
+}
+
+/* Nama Lengkap & Email cuma ditampilkan sebagai info, tidak bisa diedit
+   di sini -- dibuat abu-abu supaya jelas kelihatan bukan field aktif. */
+.cn-editprofil-form .swal2-input[readonly] {
+    background: #f3f6fa;
+    color: #6b7280;
+    cursor: default;
+    box-shadow: none;
+}
+
+.cn-editprofil-divider {
+    border: none;
+    border-top: 1.5px dashed #e2e5ec;
+    margin: 10px 0 0;
+}
+
+.cn-editprofil-divider + .cn-editprofil-label {
+    margin-top: 14px;
+}
+
+.cn-editprofil-hint {
+    font-size: 11.5px;
+    color: #98a0ad;
+    margin: 4px 2px 0;
+    min-height: 14px;
+    transition: color 0.15s ease;
+}
+
+/* Selama belum ada pesan, jangan sisakan ruang kosong -- supaya jarak ke
+   field berikutnya konsisten dengan field yang tidak punya baris
+   keterangan sama sekali. */
+.cn-editprofil-hint:empty {
+    min-height: 0;
+    margin-top: 0;
+}
+
+.cn-editprofil-hint.cn-hint-valid {
+    color: #0C7A6E;
+}
+
+.cn-editprofil-hint.cn-hint-invalid {
+    color: #d64550;
+}
+
+/* Sudut popup Edit Profil disamakan dengan modal Masuk/Daftar (16px) */
+.cn-editprofil-popup {
+    border-radius: 16px !important;
+}
+
+.cn-input-wrap {
+    position: relative;
+}
+
+.cn-input-wrap .swal2-input.has-check-icon {
+    padding-right: 34px !important;
+}
+
+.cn-input-wrap .swal2-input.has-eye-icon {
+    padding-right: 38px !important;
+}
+
+.cn-input-wrap .swal2-input.has-check-icon.has-eye-icon {
+    padding-right: 64px !important;
+}
+
+.cn-input-wrap .cn-input-check-icon {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    color: #0C7A6E;
+    font-size: 15px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+}
+
+.cn-input-wrap .cn-input-check-icon.show {
+    opacity: 1;
+}
+
+.cn-input-wrap .cn-input-check-icon.with-eye {
+    right: 40px;
+}
+
+.cn-input-wrap .cn-toggle-eye {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    color: #98a0ad;
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.cn-input-wrap .cn-toggle-eye:hover {
+    color: #566072;
+}
+
+/* Penghitung karakter (mis. "12/30") di dalam field Nama Lengkap, rata
+   kanan -- supaya tidak perlu baris terpisah di bawah form. */
+.cn-input-wrap .cn-input-counter {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: #98a0ad;
+    pointer-events: none;
+    white-space: nowrap;
+    transition: color 0.15s ease;
+}
+
+.cn-input-wrap .swal2-input.has-counter {
+    padding-right: 52px !important;
+}
+
+/* Indikator validasi real-time di dalam popup SweetAlert2 (kata sandi & konfirmasi) */
+.cn-editprofil-form .swal2-input.cn-input-valid {
+    border-color: #0C7A6E !important;
+}
+
+.cn-editprofil-form .swal2-input.cn-input-invalid {
+    border-color: #d64550 !important;
+}

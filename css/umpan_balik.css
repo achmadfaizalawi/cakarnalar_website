@@ -1,0 +1,313 @@
+/* =================================================================
+   FORM UMPAN BALIK & EVALUASI DAMPAK PROGRAM - Cakar Nalar
+   Dimuat di umpan_balik.html BERSAMA css/quiz.css (dipakai untuk
+   .quiz-topbar/.quiz-main/.quiz-header/.quiz-result-card -- lihat
+   catatan di umpan_balik.html & js/umpan_balik.js) -- file ini
+   KHUSUS berisi kelas ".ub-*" (form itu sendiri), tidak menduplikasi
+   apapun yang sudah ada di quiz.css.
+================================================================= */
+
+.ub-main {
+    max-width: 760px;
+}
+
+.ub-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 40px;
+}
+
+.ub-section {
+    background: #fff;
+    border-radius: 18px;
+    padding: clamp(20px, 4vw, 32px);
+    box-shadow: 0 6px 26px rgba(23, 51, 80, 0.08);
+}
+
+.ub-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16.5px;
+    font-weight: 700;
+    color: var(--primary-color);
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+    border-bottom: 1.5px solid #eef1f6;
+}
+
+.ub-section-title i {
+    color: var(--accent-color);
+}
+
+.ub-section-desc {
+    font-size: 13px;
+    color: #8a8fa3;
+    margin: -10px 0 20px;
+}
+
+/* Sub-judul pengelompok beberapa pertanyaan bernomor huruf (mis. "5.
+   Pengalaman Pribadi Terkait Hoaks / Disinformasi:" yang menaungi soal
+   5a & 5b) -- SENGAJA bukan ".ub-field" (tidak ada input di bawahnya
+   langsung), jadi margin bawahnya dibuat lebih kecil supaya nempel rapat
+   ke soal 5a persis di bawahnya, bukan berjarak seperti antar section. */
+.ub-subheading {
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--text-dark);
+    margin: 0 0 14px;
+}
+
+.ub-field {
+    margin-bottom: 24px;
+}
+
+.ub-field:last-child {
+    margin-bottom: 0;
+}
+
+.ub-label {
+    display: block;
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+}
+
+.ub-label-hint {
+    font-weight: 500;
+    font-size: 12.5px;
+    color: #8a8fa3;
+}
+
+.ub-label-desc {
+    display: block;
+    font-weight: 400;
+    font-size: 12.5px;
+    color: #8a8fa3;
+    margin-top: 2px;
+}
+
+/* --- Input teks & textarea --- */
+.ub-text-input,
+.ub-textarea {
+    width: 100%;
+    border: 1.5px solid #dfe3ea;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text-dark);
+    transition: border-color 0.15s ease;
+}
+
+.ub-text-input:focus,
+.ub-textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.ub-textarea {
+    resize: vertical;
+    min-height: 70px;
+}
+
+/* --- Dropdown Kota/Kabupaten + nama wilayah (field "Domisili") -- gaya
+   SAMA dengan .ub-text-input (border/radius/padding/font) supaya
+   menyatu, cuma lebarnya dipaksa tetap (flex: 0 0 auto) sementara input
+   nama wilayahnya yang melebar mengisi sisa ruang. --- */
+.ub-domisili-row {
+    display: flex;
+    gap: 10px;
+}
+
+.ub-select {
+    flex: 0 0 130px;
+    border: 1.5px solid #dfe3ea;
+    border-radius: 10px;
+    padding: 10px 30px 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text-dark);
+    background: #fff;
+    transition: border-color 0.15s ease;
+    /* Panah bawaan browser (default <select>) nempel mepet banget ke tepi
+       kanan kotak yang sempit (flex 130px) ini, jadi kelihatan "kepinggir".
+       Diganti panah kustom (appearance:none + SVG chevron) yang jaraknya
+       diatur sendiri lewat background-position, biar ada nafas dari tepi
+       kanan -- bukan cuma dirapatkan ke pojok. */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="%236b7684" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 11px 7px;
+}
+
+.ub-select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.ub-domisili-row .ub-text-input {
+    flex: 1;
+    min-width: 0; /* biar input tetap boleh menyempit di layar kecil, bukan malah mendorong .ub-select keluar/overflow */
+}
+
+/* Layar SANGAT sempit -- dropdown & input nama wilayah ditumpuk (bukan
+   sejajar) supaya keduanya tetap cukup lebar untuk dibaca/diisi, bukan
+   saling berebut ruang jadi kependekan. */
+@media (max-width: 380px) {
+    .ub-domisili-row {
+        flex-direction: column;
+    }
+
+    .ub-select {
+        flex: 1;
+    }
+}
+
+/* --- Pilihan tunggal (radio) & ganda (checkbox) -- dirender sebagai
+   daftar baris (bukan pil kecil), supaya label yang panjang tetap
+   gampang dibaca penuh, bukan terpotong. --- */
+.ub-pilihan-tunggal,
+.ub-pilihan-ganda {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ub-pilihan-item {
+    position: relative;
+}
+
+.ub-pilihan-item input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.ub-pilihan-item label {
+    display: block;
+    padding: 11px 16px;
+    border: 1.5px solid #dfe3ea;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.ub-pilihan-item label:hover {
+    border-color: var(--accent-color);
+}
+
+.ub-pilihan-item input:checked+label {
+    border-color: var(--accent-color);
+    background: rgba(12, 122, 110, 0.08);
+    color: var(--accent-color);
+    font-weight: 700;
+}
+
+.ub-pilihan-item input:focus-visible+label {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+.ub-pilihan-item input:disabled+label {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* --- Skala 1-5 / 1-10 (mis. efektivitas materi, NPS) -- deretan pil
+   bernomor, SAMA POLA visualnya dengan .sertifikat-materi-skor/
+   .quiz-range-badge (angka bulat, warna accent saat dipilih). --- */
+.ub-skala {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ub-skala input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.ub-skala label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1.5px solid #dfe3ea;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.ub-skala label:hover {
+    border-color: var(--accent-color);
+}
+
+.ub-skala input:checked+label {
+    border-color: var(--accent-color);
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.ub-skala input:focus-visible+label {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+@media (max-width: 420px) {
+    .ub-skala label {
+        width: 36px;
+        height: 36px;
+        font-size: 12.5px;
+    }
+}
+
+/* --- Tombol kirim --- */
+.ub-submit-row {
+    display: flex;
+    justify-content: center;
+    padding: 4px 0 24px;
+}
+
+.ub-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--accent-color);
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 14px;
+    border: none;
+    box-shadow: 0 10px 26px rgba(12, 122, 110, 0.28);
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.ub-submit-btn:hover:not(:disabled) {
+    background: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.ub-submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}

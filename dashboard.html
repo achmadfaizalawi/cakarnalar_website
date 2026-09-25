@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Peserta - Cakar Nalar</title>
+
+    <link rel="icon" type="image/png" href="assets/logo/logo-icon-transparent.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body class="dashboard-body">
+
+    <!-- ===================== TOPBAR ===================== -->
+    <nav class="navbar-cakar">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="index.html"><img src="assets/logo/logo-cakar-nalar-horizontal.png" class="logo-img"
+                    alt="Cakar Nalar"></a>
+
+            <div class="d-none d-lg-flex align-items-center gap-3">
+                <div class="topbar-user d-flex align-items-center gap-2" id="topbar-user-btn"
+                    onclick="bukaEditProfil()" role="button" tabindex="0" title="Edit Profil">
+                    <div class="topbar-avatar"><i class="fa-solid fa-user"></i></div>
+                    <span class="topbar-username" id="topbar-username">Peserta</span>
+                </div>
+                <button class="btn btn-outline-nav" id="btn-logout" onclick="logout()">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span class="ms-1">Keluar</span>
+                </button>
+            </div>
+
+            <button class="navbar-toggler-custom d-lg-none" onclick="toggleDashMenu()"
+                aria-label="Buka menu" aria-expanded="false" id="dashMenuBtn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="mobile-menu-backdrop" id="dashMenuBackdrop" onclick="closeDashMenu()"></div>
+    <div class="mobile-menu" id="dashMenu">
+        <div class="container">
+            <div class="dash-mobile-user" onclick="closeDashMenu(); bukaEditProfil();" role="button" tabindex="0"
+                title="Edit Profil">
+                <div class="topbar-avatar"><i class="fa-solid fa-user"></i></div>
+                <span class="topbar-username" id="topbar-username-mobile">Peserta</span>
+            </div>
+            <button class="btn btn-outline-nav dash-mobile-logout" onclick="logout()">
+                <i class="fa-solid fa-right-from-bracket me-1"></i> Keluar
+            </button>
+        </div>
+    </div>
+
+    <main class="container dashboard-main">
+
+        <!-- ===================== HEADER SAMBUTAN + PROGRES ===================== -->
+        <section class="welcome-card reveal in-view" id="welcome-card">
+            <div class="welcome-decor" aria-hidden="true">
+                <i class="fa-solid fa-shield-halved"></i>
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <i class="fa-solid fa-lightbulb"></i>
+            </div>
+            <div class="welcome-text">
+                <span class="section-label"><i class="fa-solid fa-hand-sparkles"></i> Selamat Datang</span>
+                <h2 class="section-title mb-1" id="welcome-name">Halo!</h2>
+                <p class="section-sub mb-0" id="welcome-subtitle">Lanjutkan perjalanan belajarmu untuk jadi <em>Digital
+                    Citizen</em> yang kritis dan kebal hoaks.</p>
+            </div>
+            <div class="welcome-progress">
+                <div class="progress-ring-wrap">
+                    <svg width="86" height="86" viewBox="0 0 86 86">
+                        <circle class="progress-ring-bg" cx="43" cy="43" r="37"></circle>
+                        <circle class="progress-ring-fg" id="progressRing" cx="43" cy="43" r="37"></circle>
+                    </svg>
+                    <div class="progress-ring-label" id="progress-percent">0%</div>
+                </div>
+                <div class="progress-caption" id="progress-caption">0 dari 8 tahap selesai</div>
+            </div>
+            <!-- Tombol CTA di sini SEKARANG dinamis mengikuti tahap yang
+                 lagi aktif (bukan cuma muncul begitu 100% lagi) -- lihat
+                 renderWelcomeCta() di js/dashboard.js buat urutan
+                 prioritasnya (Final Tryout selesai > Tes Diagnostik belum >
+                 masih ada bab yang harus dituntaskan > Final Tryout siap
+                 dikerjakan). Dikosongkan dulu di sini, isi & tampil/
+                 sembunyinya full dikontrol JS. -->
+            <div class="welcome-cta-actions" id="welcome-cta-actions"></div>
+        </section>
+
+        <!-- ===================== TES DIAGNOSTIK ===================== -->
+        <section class="mb-4">
+            <span class="section-label"><i class="fa-solid fa-flask"></i> Langkah 1</span>
+            <h5 class="stage-heading">Tes Diagnostik</h5>
+            <div id="diagnostik-card"></div>
+        </section>
+
+        <!-- ===================== DAFTAR BAB ===================== -->
+        <section class="mb-4">
+            <span class="section-label"><i class="fa-solid fa-book-open"></i> Langkah 2-5</span>
+            <h5 class="stage-heading">Materi &amp; Kuis per Bab</h5>
+            <div class="row g-3" id="bab-list"></div>
+        </section>
+
+        <!-- ===================== FINAL TRYOUT ===================== -->
+        <section class="mb-5">
+            <span class="section-label"><i class="fa-solid fa-trophy"></i> Langkah 6</span>
+            <h5 class="stage-heading">Final Tryout</h5>
+            <div id="tryout-card"></div>
+        </section>
+
+    </main>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="site-footer site-footer-minimal">
+        <div class="container">
+            <div class="footer-bottom">
+                Cakar Nalar © <span id="footer-year"></span>. Seluruh hak cipta dilindungi.
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/transition.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
+
+</body>
+
+</html>

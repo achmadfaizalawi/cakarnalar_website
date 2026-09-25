@@ -1,0 +1,14 @@
+# Kredensial database produksi -- JANGAN pernah di-commit.
+api/config.php
+
+# File materi yang diunggah peserta/admin -- tidak perlu ikut di git.
+uploads/*
+!uploads/.htaccess
+!uploads/.gitkeep
+
+# File log / sisa proses development lokal.
+*.log
+
+# File OS/editor umum.
+.DS_Store
+Thumbs.db

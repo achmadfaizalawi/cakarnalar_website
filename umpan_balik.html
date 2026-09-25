@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Umpan Balik - Cakar Nalar</title>
+
+    <link rel="icon" type="image/png" href="assets/logo/logo-icon-transparent.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/quiz.css">
+    <link rel="stylesheet" href="css/umpan_balik.css">
+</head>
+
+<body class="quiz-body">
+
+    <nav class="quiz-topbar">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="dashboard.html" class="quiz-back-link">
+                <i class="fa-solid fa-arrow-left"></i> <span class="quiz-back-text">Kembali ke Dashboard</span>
+            </a>
+            <img src="assets/logo/logo-cakar-nalar-horizontal.png" class="logo-img" alt="Cakar Nalar">
+        </div>
+    </nav>
+
+    <main class="quiz-main ub-main">
+        <div class="quiz-header">
+            <h2>Form Umpan Balik &amp; Evaluasi Program</h2>
+            <p>Isian ini cukup SEKALI SAJA sebelum sertifikat penyelesaianmu bisa diunduh. Jawabanmu sangat berharga
+                buat tim pengembang menyempurnakan Program Cakar Nalar ke depannya.</p>
+        </div>
+
+        <!-- Ditampilkan selagi status kelayakan (eligible/sudah_isi) masih
+             dimuat dari api/get_umpan_balik.php, ATAU kalau ternyata belum
+             berhak/sudah pernah isi -- lihat js/umpan_balik.js -->
+        <div id="ub-status"></div>
+
+        <!-- Form asli -- disembunyikan dulu sampai server memastikan
+             peserta ini eligible & belum pernah isi (lihat muatStatusUmpanBalik
+             di js/umpan_balik.js). -->
+        <form id="ub-form" class="ub-form" style="display:none;" onsubmit="return kirimUmpanBalik(event);">
+
+            <!-- ===== BAGIAN I ===== -->
+            <div class="ub-section">
+                <div class="ub-section-title"><i class="fa-solid fa-user"></i> Bagian I: Profil Responden &amp;
+                    Kebiasaan Digital</div>
+
+                <div class="ub-field">
+                    <label class="ub-label">1. Kategori Peserta</label>
+                    <div class="ub-pilihan-tunggal" id="ub-kategori_peserta"></div>
+                </div>
+
+                <div class="ub-field">
+                    <label class="ub-label">2. Jenis Kelamin</label>
+                    <div class="ub-pilihan-tunggal" id="ub-jenis_kelamin"></div>
+                </div>
+
+                <div class="ub-field">
+                    <label class="ub-label" for="ub-domisili-nama">Domisili</label>
+                    <!-- Dipisah jadi 2 input (dropdown Kota/Kabupaten + nama
+                         wilayahnya) -- SENGAJA, bukan 1 input teks bebas
+                         seperti sebelumnya -- supaya data yang masuk konsisten
+                         (peserta kadang cuma ngetik nama kotanya aja tanpa
+                         embel-embel "Kota"/"Kabupaten", jadi susah direkap).
+                         Nilainya digabung jadi 1 string di kirimUmpanBalik()
+                         (js/umpan_balik.js) sebelum dikirim -- backend/kolom
+                         "domisili" TETAP 1 kolom teks biasa, tidak ada
+                         perubahan struktur database. -->
+                    <div class="ub-domisili-row">
+                        <select class="ub-select" id="ub-domisili-jenis" required>
+                            <option value="" disabled selected>Pilih...</option>
+                            <option value="Kota">Kota</option>
+                            <option value="Kabupaten">Kabupaten</option>
+                        </select>
+                        <input type="text" class="ub-text-input" id="ub-domisili-nama" maxlength="140"
+                            placeholder="Mis. Bandung" required>
+                    </div>
+                </div>
+
+                <div class="ub-field">
+                    <label class="ub-label">3. Durasi Penggunaan Media Sosial per Hari</label>
+                    <div class="ub-pilihan-tunggal" id="ub-durasi_medsos"></div>
+                </div>
+
+                <div class="ub-field">
+                    <label class="ub-label">4. Platform Media Utama yang Sering Digunakan <span
+                            class="ub-label-hint">(boleh lebih dari satu)</span></label>
+                    <div class="ub-pilihan-ganda" id="ub-platform_medsos"></div>
+                </div>
+
+                <p class="ub-subheading">5. Pengalaman Pribadi Terkait Hoaks / Disinformasi:</p>
+
+                <div class="ub-field">
+                    <label class="ub-label">5a. Seberapa sering Anda menerima berita yang terindikasi hoaks/bohong?</label>
+                    <div class="ub-pilihan-tunggal" id="ub-hoaks_frekuensi"></div>
+                </div>
+
+                <div class="ub-field">
+                    <label class="ub-label">5b. Pernahkah Anda/kerabat terdekat hampir tertipu oleh hoaks/<em>phishing</em>?</label>
+                    <div class="ub-pilihan-tunggal" id="ub-pernah_tertipu"></div>
+                </div>
+            </div>
+
+            <!-- ===== BAGIAN II ===== -->
+            <div class="ub-section">
+                <div class="ub-section-title"><i class="fa-solid fa-book-open"></i> Bagian II: Evaluasi Efektivitas
+                    Materi (Bab 1-5)</div>
+                <p class="ub-section-desc">Berikan penilaian terhadap efektivitas materi menggunakan skala 1-5 (1 =
+                    Sangat Tidak Efektif, 5 = Sangat Efektif).</p>
+
+                <div class="ub-field">
+                    <label class="ub-label">1. Bab 1 (Fakta vs Asumsi): <span class="ub-label-desc">Kemampuan
+                            membedakan fakta teruji dengan asumsi/opini &amp; kebiasaan menerapkan 3 Pertanyaan Emas
+                            Semut 'Tahu'.</span></label>
+                    <div class="ub-skala" id="ub-bab1_skor" data-max="5"></div>
+                </div>
+                <div class="ub-field">
+                    <label class="ub-label">2. Bab 2 (Deteksi Disinformasi 5W+1H): <span class="ub-label-desc">Kejelasan
+                            matriks radar Robot 'Botis' dalam mengenali <em>clickbait</em>, mis/dis/malinformasi, &amp; tautan
+                            <em>phishing</em>.</span></label>
+                    <div class="ub-skala" id="ub-bab2_skor" data-max="5"></div>
+                </div>
+                <div class="ub-field">
+                    <label class="ub-label">3. Bab 3 (Evaluasi Argumen): <span class="ub-label-desc">Pemahaman 4
+                            Kriteria Evaluasi RED Model (<em>Authority</em>, <em>Objectivity</em>, <em>Accuracy</em>, <em>Scope</em>) untuk menguji
+                            data.</span></label>
+                    <div class="ub-skala" id="ub-bab3_skor" data-max="5"></div>
+                </div>
+                <div class="ub-field">
+                    <label class="ub-label">4. Bab 4 (Mengupas Cacat Logika): <span class="ub-label-desc">Kemampuan
+                            mengidentifikasi 8 <em>Logical Fallacy</em> populer (<em>Ad Hominem</em>, <em>Strawman</em>, dll) dalam komentar
+                            medsos.</span></label>
+                    <div class="ub-skala" id="ub-bab4_skor" data-max="5"></div>
+                </div>
+                <div class="ub-field">
+                    <label class="ub-label">5. Bab 5 (Kewarganegaraan Digital): <span class="ub-label-desc">Kepatuhan
+                            menerapkan Protokol 6 Langkah S-A-R-I-N-G &amp; etika Japri santun meluruskan hoaks di
+                            grup WA.</span></label>
+                    <div class="ub-skala" id="ub-bab5_skor" data-max="5"></div>
+                </div>
+            </div>
+
+            <!-- ===== BAGIAN III ===== -->
+            <div class="ub-section">
+                <div class="ub-section-title"><i class="fa-solid fa-palette"></i> Bagian III: Evaluasi Desain Media,
+                    Visual, &amp; Maskot</div>
+                <p class="ub-section-desc">Skala 1-5 (1 = Sangat Tidak Setuju, 5 = Sangat Setuju).</p>
+
+                <div class="ub-field">
+                    <label class="ub-label">6. Peran Maskot Pendamping: <span class="ub-label-desc">Kehadiran Semut
+                            'Tahu', Robot 'Botis', dan Kancil 'Cil' memudahkan pemahaman materi akademis yang
+                            rumit.</span></label>
+                    <div class="ub-skala" id="ub-maskot_skor" data-max="5"></div>
+                </div>
+                <div class="ub-field">
+                    <label class="ub-label">7. Daya Tarik Desain &amp; Visual: <span class="ub-label-desc">Tata
+                            letak, warna, diagram alur, dan kartu penjelasan pada Buku Pedoman/<em>Slide</em> PPT menarik
+                            &amp; tidak membosankan.</span></label>
+                    <div class="ub-skala" id="ub-desain_skor" data-max="5"></div>
+                </div>
+                <div class="ub-field">
+                    <label class="ub-label">8. Kesesuaian Studi Kasus Lokal: <span class="ub-label-desc">Contoh
+                            kasus nyata Indonesia (hoaks WA air es, <em>deepfake</em> BLT Kemenkeu, perdebatan medsos) sangat
+                            <em>relate</em>.</span></label>
+                    <div class="ub-skala" id="ub-studi_kasus_skor" data-max="5"></div>
+                </div>
+                <div class="ub-field">
+                    <label class="ub-label">9. Kegunaan Lembar Kerja &amp; Glosarium: <span
+                            class="ub-label-desc"><em>Worksheet</em> latihan mandiri dan kamus glosarium istilah sangat
+                            membantu latihan penalaran kritis.</span></label>
+                    <div class="ub-skala" id="ub-lembar_kerja_skor" data-max="5"></div>
+                </div>
+            </div>
+
+            <!-- ===== BAGIAN IV ===== -->
+            <div class="ub-section">
+                <div class="ub-section-title"><i class="fa-solid fa-brain"></i> Bagian IV: Self-Assessment Perubahan
+                    Perilaku Digital</div>
+
+                <div class="ub-field">
+                    <label class="ub-label">10. Seberapa percaya diri Anda dalam memverifikasi berita/informasi
+                        heboh sebelum menekan tombol '<em>Share</em>'? <span class="ub-label-hint">(1 = Sangat Ragu-ragu, 5 =
+                            Sangat Percaya Diri &amp; Siap Menerapkan)</span></label>
+                    <div class="ub-skala" id="ub-kepercayaan_verifikasi" data-max="5"></div>
+                </div>
+
+                <div class="ub-field">
+                    <label class="ub-label">11a. Berdasarkan Rubrik Paul &amp; Elder, di manakah tingkatan berpikir
+                        kritis Anda SEBELUM mengikuti Cakar Nalar?</label>
+                    <div class="ub-pilihan-tunggal" id="ub-tingkat_sebelum"></div>
+                </div>
+                <div class="ub-field">
+                    <label class="ub-label">11b. Di manakah tingkatan berpikir kritis Anda SESUDAH mengikuti Cakar
+                        Nalar?</label>
+                    <div class="ub-pilihan-tunggal" id="ub-tingkat_sesudah"></div>
+                </div>
+
+                <div class="ub-field">
+                    <label class="ub-label">12. Tindakan Nyata yang Sudah/Akan Anda Lakukan Setelah Mengikuti Cakar
+                        Nalar <span class="ub-label-hint">(boleh lebih dari satu)</span></label>
+                    <div class="ub-pilihan-ganda" id="ub-tindakan_nyata"></div>
+                </div>
+            </div>
+
+            <!-- ===== BAGIAN V ===== -->
+            <div class="ub-section">
+                <div class="ub-section-title"><i class="fa-solid fa-lightbulb"></i> Bagian V: Riset Kebutuhan
+                    Pengembangan Masa Depan (Strategis)</div>
+
+                <div class="ub-field">
+                    <label class="ub-label">13. Bentuk Format Media Pembelajaran yang Paling Anda Inginkan untuk
+                        Pengembangan Cakar Nalar Selanjutnya <span class="ub-label-hint">(boleh lebih dari
+                            satu)</span></label>
+                    <div class="ub-pilihan-ganda" id="ub-format_media"></div>
+                </div>
+
+                <div class="ub-field">
+                    <label class="ub-label">14. Fitur Baru yang Paling Sangat Anda Butuhkan Kedepannya <span
+                            class="ub-label-hint">(pilih maks 2)</span></label>
+                    <div class="ub-pilihan-ganda" id="ub-fitur_baru" data-max="2"></div>
+                </div>
+
+                <div class="ub-field">
+                    <label class="ub-label">15. Seberapa besar kemungkinan Anda merekomendasikan Program Cakar Nalar
+                        kepada rekan/keluarga? <span class="ub-label-hint">(<em>Net Promoter Score</em>, 1 = Sangat Tidak
+                            Merekomendasikan, 10 = Sangat Merekomendasikan)</span></label>
+                    <div class="ub-skala" id="ub-nps" data-max="10"></div>
+                </div>
+            </div>
+
+            <!-- ===== BAGIAN VI ===== -->
+            <div class="ub-section">
+                <!-- Teks judul (termasuk <em>Critique</em>) SENGAJA dibungkus
+                     dalam SATU <span>, bukan dibiarkan jadi teks lepas
+                     langsung di dalam .ub-section-title -- section title ini
+                     "display:flex; gap:10px" (lihat css/umpan_balik.css),
+                     jadi kalau <em> jadi anak langsung/teks lepas di flex
+                     container itu, browser menganggap tiap potongan teks
+                     (sebelum/sesudah <em>) sebagai flex item TERPISAH &
+                     ikut kena "gap" itu juga -- muncul sebagai spasi aneh
+                     yang nyempil sebelum & sesudah kata "Critique". Dibungkus
+                     satu <span> supaya cuma ada 2 flex item (ikon & span
+                     ini), gap-nya cuma kepakai SEKALI di antara keduanya. -->
+                <div class="ub-section-title"><i class="fa-solid fa-comment-dots"></i> <span>Bagian VI: Saran,
+                        <em>Critique</em>, &amp; Kesan Peserta</span></div>
+
+                <div class="ub-field">
+                    <label class="ub-label" for="ub-materi_bermanfaat">16. Menurut Anda, materi atau topik manakah
+                        yang Paling Bermanfaat &amp; Mengapa?</label>
+                    <textarea class="ub-textarea" id="ub-materi_bermanfaat" rows="3" required></textarea>
+                </div>
+                <div class="ub-field">
+                    <label class="ub-label" for="ub-kritik_saran">17. Kritik &amp; Masukan Perbaikan untuk Tim
+                        Pengembang Cakar Nalar (Modul, Media, Fasilitator, dll)</label>
+                    <textarea class="ub-textarea" id="ub-kritik_saran" rows="3" required></textarea>
+                </div>
+                <div class="ub-field">
+                    <label class="ub-label" for="ub-pesan_kesan">18. Pesan/Kesan Singkat Anda Setelah Mengikuti
+                        Program Cakar Nalar</label>
+                    <textarea class="ub-textarea" id="ub-pesan_kesan" rows="3" required></textarea>
+                </div>
+            </div>
+
+            <div class="ub-submit-row">
+                <button type="submit" class="ub-submit-btn" id="ub-submit-btn">
+                    <i class="fa-solid fa-paper-plane"></i> Kirim Umpan Balik
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/transition.js"></script>
+    <script src="js/umpan_balik.js"></script>
+
+</body>
+
+</html>

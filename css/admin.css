@@ -1,0 +1,2810 @@
+/* ===================== PANEL ADMIN CAKAR NALAR ===================== */
+
+/* CATATAN soal scroll & modal: JANGAN tambahkan "scrollbar-gutter" atau
+   kunci overflow di <body> di sini -- situs ini sudah punya mekanisme
+   khusus untuk ini di css/style.css + js/main.js ("cn-modal-scroll-lock",
+   dipakai juga oleh modal Masuk/Daftar), dan openAdminModal()/
+   closeAdminModal() di admin.js sudah pakai class yang SAMA supaya
+   perilakunya konsisten se-situs. Menambah "scrollbar-gutter: stable" di
+   <html> DI ATAS "overflow-y: scroll" bawaan style.css justru bikin
+   sebagian browser (Chrome di Windows) menyisakan ruang scrollbar dua
+   kali lipat -- scrollbar dobel + dialog kelihatan geser -- persis bug
+   yang pernah muncul di sini, jangan diulang lagi. */
+
+.admin-body {
+    background: var(--bg-color);
+    min-height: 100vh;
+}
+
+:root {
+    --danger-color: #d64550;
+}
+
+/* --- Sidebar ---
+   Putih, tapi TIDAK menyatu polos dengan warna latar halaman di
+   sebelahnya (--bg-color, #f8f9fc) -- dipisahkan lewat garis tipis di
+   kanan + bayangan halus, supaya batas sidebar tetap kelihatan jelas
+   walau dua-duanya sama-sama nuansa putih. */
+.admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 250px;
+    background: #fff;
+    border-right: 1px solid #eef1f6;
+    box-shadow: 6px 0 24px rgba(23, 51, 80, 0.05);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transition: width 0.25s ease, transform 0.3s ease;
+}
+
+.admin-sidebar-logo {
+    position: relative;
+    padding: 18px 20px;
+    border-bottom: 1px solid #eef1f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 30px;
+}
+
+.admin-sidebar-logo-full {
+    height: 28px;
+    display: block;
+    max-width: 100%;
+}
+
+/* Ikon-saja (logo-icon-transparent.png) dipakai waktu sidebar
+   diperkecil -- disembunyikan secara default, baru ditampilkan lewat
+   .admin-sidebar.collapsed di bawah. */
+.admin-sidebar-logo-icon {
+    height: 30px;
+    display: none;
+}
+
+.admin-sidebar-collapse-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid #e2e5ec;
+    background: #fff;
+    color: #8a8fa3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-sidebar-collapse-btn:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+
+.admin-sidebar-collapse-btn i {
+    transition: transform 0.25s ease;
+}
+
+.admin-nav {
+    flex: 1;
+    padding: 18px 14px;
+}
+
+.admin-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 11px;
+    color: var(--text-dark);
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.admin-nav-item i {
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Label menu ("Kelola Materi", dst) TIDAK BOLEH membungkus ke baris ke-2
+   -- tanpa ini, waktu sidebar sedang animasi keluar dari kondisi
+   diperkecil (lebar sidebar masih bertahap dari 76px ke 250px selama
+   0.25 detik, lihat "transition: width" di .admin-sidebar), labelnya
+   sempat kelihatan pecah jadi 2 baris di tengah-tengah animasi itu,
+   baru "loncat" balik ke 1 baris begitu sidebar-nya selesai melebar --
+   sama persis dengan flicker paragraf di .admin-page-header yang sudah
+   diperbaiki sebelumnya. "overflow:hidden" + "text-overflow:ellipsis"
+   cuma jaring pengaman kalau lebarnya SEMENTARA masih sempit (dipotong
+   rapi, bukan tumpah keluar sidebar) -- begitu animasinya selesai di
+   lebar penuh (250px), labelnya selalu muat utuh dalam 1 baris. */
+.admin-nav-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-nav-item:hover:not(.disabled) {
+    background: #f2f4f8;
+    color: var(--primary-color);
+}
+
+.admin-nav-item.active {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.admin-nav-item.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.admin-nav-item .soon-badge {
+    margin-left: auto;
+    font-size: 9.5px;
+    font-weight: 700;
+    background: #eef1f6;
+    color: #8a8fa3;
+    padding: 2px 7px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.admin-sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid #eef1f6;
+}
+
+.admin-user-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #f6f8fb;
+    border-radius: 12px;
+    margin-bottom: 8px;
+}
+
+.admin-user-chip-text {
+    overflow: hidden;
+}
+
+.admin-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12.5px;
+    flex-shrink: 0;
+}
+
+.admin-user-name {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 13.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-user-role {
+    color: #8a8fa3;
+    font-size: 11.5px;
+}
+
+.admin-logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(214, 69, 80, 0.09);
+    color: var(--danger-color);
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    transition: background 0.2s ease;
+}
+
+.admin-logout-btn:hover {
+    background: rgba(214, 69, 80, 0.16);
+    color: var(--danger-color);
+}
+
+/* --- Sidebar diperkecil (desktop) --- */
+@media (min-width: 992px) {
+    .admin-sidebar.collapsed {
+        width: 76px;
+    }
+
+    .admin-sidebar.collapsed .admin-sidebar-logo {
+        justify-content: center;
+        padding: 18px 10px;
+    }
+
+    .admin-sidebar.collapsed .admin-sidebar-logo-full {
+        display: none;
+    }
+
+    .admin-sidebar.collapsed .admin-sidebar-logo-icon {
+        display: block;
+    }
+
+    .admin-sidebar.collapsed .admin-sidebar-collapse-btn {
+        position: absolute;
+        top: 14px;
+        right: -13px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(23, 51, 80, 0.15);
+    }
+
+    .admin-sidebar.collapsed .admin-sidebar-collapse-btn i {
+        transform: rotate(180deg);
+    }
+
+    .admin-sidebar.collapsed .admin-nav-item {
+        justify-content: center;
+        padding: 12px 0;
+        gap: 0;
+    }
+
+    .admin-sidebar.collapsed .admin-nav-label,
+    .admin-sidebar.collapsed .soon-badge {
+        display: none;
+    }
+
+    .admin-sidebar.collapsed .admin-user-chip {
+        justify-content: center;
+        padding: 10px;
+    }
+
+    .admin-sidebar.collapsed .admin-user-chip-text {
+        display: none;
+    }
+
+    .admin-sidebar.collapsed .admin-logout-label {
+        display: none;
+    }
+
+    body.admin-sidebar-collapsed .admin-main {
+        margin-left: 76px;
+    }
+}
+
+/* --- Konten utama --- */
+.admin-main {
+    margin-left: 250px;
+    padding: 32px 34px 60px;
+    /* SENGAJA tidak dianimasikan (dulu "transition: margin-left 0.25s
+       ease") -- lebar kontennya (termasuk paragraf judul halaman yang
+       panjang) langsung "meloncat" ke ukuran akhirnya begitu sidebar
+       diperkecil/dibesarkan, alih-alih pelan-pelan mengikuti animasi
+       sidebar. Kenapa: teks yang bungkus baris TIDAK BISA dianimasikan
+       mulus (jumlah barisnya cuma bisa 1 ATAU 2, tidak ada di antaranya),
+       jadi kalau lebarnya ikut dianimasikan pelan-pelan, teksnya kelihatan
+       "loncat" dari 2 baris ke 1 baris di TENGAH-TENGAH animasi (baru
+       nyambung lagi begitu animasi selesai) -- itu yang kelihatan seperti
+       flicker/gangguan. Sidebar-nya sendiri (lebar, ikon, label) tetap
+       animasi seperti biasa lewat "transition" masing-masing di atas --
+       cuma konten utama ini yang sengaja dibuat langsung pas, supaya
+       teksnya cuma butuh nge-render ulang SEKALI (langsung ke bentuk
+       akhir), bukan berkali-kali sepanjang animasi. */
+
+    /* Sticky footer: dibuat flex-column setinggi minimal layar (bukan
+       cuma setinggi kontennya), supaya footer di bawah (lihat
+       ".admin-footer") bisa didorong nempel ke bawah layar lewat
+       "margin-top: auto" waktu kontennya pendek. Ini memperbaiki footer
+       yang sempat "kedip" (muncul sekilas lalu hilang) waktu buka
+       Kelola Materi: daftar bab dimuat async (loadBabList()), jadi
+       sesaat sebelum datanya sampai, kontennya cuma seukuran spinner
+       "Memuat bab..." yang pendek -- tanpa flex ini, footer langsung
+       muncul persis di bawah spinner (di tengah layar, kelihatan
+       jelas), lalu begitu daftar bab yang lebih tinggi selesai
+       dirender, footer meloncat jauh ke bawah. Dengan footer sudah
+       nempel di bawah dari awal, loncatannya jadi jauh lebih kecil/
+       nyaris tidak kelihatan. */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* --- Footer di bagian bawah panel admin (bleed ke tepi area konten) ---
+   Footer ini di halaman lain (landing, dashboard peserta, dst) sengaja
+   gelap (var(--primary-color)) supaya kontras dengan bagian bawah
+   halaman itu. Di panel admin warna gelapnya malah bikin ada jeda warna
+   abu-abu (--bg-color panel admin) yang canggung persis di atas footer
+   sebelum warna gelapnya muncul -- jadi di sini background-nya
+   ditimpa supaya SAMA dengan warna latar panel admin sendiri, baur
+   tanpa ada garis batas/blok warna lain yang mengganggu. */
+.admin-footer {
+    margin: 40px -34px -60px;
+    /* Dorong ke bawah nempel ke tepi bawah layar waktu konten di
+       atasnya pendek -- lihat catatan "Sticky footer" di ".admin-main".
+       Harus DI BAWAH shorthand "margin" di atas (bukan digabung jadi
+       satu baris) karena shorthand "margin: ..." me-reset margin-top
+       juga -- taruh belakangan supaya nilai auto ini yang menang. */
+    margin-top: auto;
+}
+
+/* Selektor "footer.admin-footer" (bukan cuma ".admin-footer") supaya
+   spesifisitasnya menang lawan "footer.site-footer" bawaan di
+   style.css yang nge-set warna gelap itu. */
+footer.admin-footer {
+    background: var(--bg-color);
+}
+
+.admin-footer .footer-bottom {
+    color: #8a8fa3;
+}
+
+.admin-footer.site-footer-minimal {
+    padding: 22px 34px;
+}
+
+.admin-mobile-topbar {
+    display: none;
+}
+
+.admin-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+}
+
+.admin-page-header h2 {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0 0 4px;
+}
+
+.admin-page-header p {
+    color: #8a8fa3;
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Tombol "+ Tambah" (header halaman Kelola Soal & Kelola Materi, dan
+   "Tambah Soal Kuis" di modal "Kelola Soal Kuis") -- teksnya cuma
+   "Tambah" (dipendekkan dari "Tambah Soal"/"Tambah Materi"/"Tambah Soal
+   Kuis"), jadi jaraknya ke ikon "+" perlu diatur EKSPLISIT lewat "gap" di
+   sini (bukan cuma andalkan 1 spasi biasa di HTML) supaya tetap terlihat
+   proporsional walau teksnya sekarang pendek. */
+.admin-page-header .admin-btn-primary,
+.admin-btn-tambah-kecil {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.admin-btn-primary {
+    background: var(--accent-color);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+}
+
+.admin-btn-primary:hover {
+    background: var(--primary-color);
+    color: #fff;
+}
+
+.admin-btn-danger {
+    background: var(--danger-color);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+}
+
+.admin-btn-danger:hover {
+    background: #b93a44;
+    color: #fff;
+}
+
+.admin-btn-danger:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Select "Pilih bagian..." di modal Reset Progres -- pakai panah SVG
+   sendiri (sama seperti .monitor-filter-bar select) supaya jaraknya ke
+   tepi kanan konsisten, bukan panah bawaan browser yang kelihatan
+   kepinggir. */
+#monitorResetSelect {
+    padding: 10px 34px 10px 14px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238a8fa3' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+}
+
+/* --- Tab jenis soal --- */
+.admin-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.admin-tab-btn {
+    background: #fff;
+    border: 1.5px solid #e2e5ec;
+    color: var(--text-dark);
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 9px 18px;
+    border-radius: 30px;
+    transition: all 0.2s ease;
+}
+
+.admin-tab-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+}
+
+/* --- Kartu dropdown generik di halaman admin (dipakai buat "Batas Waktu
+   Pengerjaan" di Kelola Soal) -- header selalu tampil (judul + ringkasan
+   status singkat), badannya baru muncul begitu diklik. Sengaja TIDAK
+   dianimasikan (beda dari .quiz-collapse-card di sisi peserta) supaya
+   tidak perlu hitung ulang tinggi tiap kali isinya berubah (mis. kotak
+   durasi yang muncul/hilang begitu toggle waktu dinyalakan/dimatikan
+   waktu badannya sedang terbuka) -- cukup tampil/sembunyi langsung,
+   lebih sederhana & tetap rapi untuk kebutuhan panel admin. */
+.admin-collapse-card {
+    background: #fff;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.admin-collapse-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 14px 16px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--text-dark);
+    cursor: pointer;
+}
+
+/* Ikon jam DIPISAH dari kolom judul+status (bukan lagi di dalam
+   ".admin-collapse-title-text") -- supaya waktu kolom judul+status ini
+   ditumpuk ke bawah di layar sempit (lihat ".admin-collapse-title-lines"
+   di bawah), baris "Saat ini: ..." rata kiri dengan TULISAN "Batas Waktu
+   Pengerjaan", bukan ikut rata dengan ikon jam di depannya. */
+.admin-collapse-title-icon {
+    color: var(--accent-color);
+    flex-shrink: 0;
+}
+
+/* Bungkus ikon + kolom judul supaya ikon tetap di posisinya sendiri
+   (tidak ikut turun waktu status ringkas ditumpuk ke bawah baris judul
+   di layar sempit). */
+.admin-collapse-title-main {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Bungkus judul + status ringkas (mis. "Saat ini: 15 menit") supaya bisa
+   diatur terpisah dari ikon jam di depannya maupun ikon panah di ujung
+   kanan. Lebar layar cukup -> status ringkas nempel di samping judul
+   (flex-wrap alami kalau memang kurang muat); di layar sempit dipaksa
+   turun ke baris sendiri lewat media query di bawah, rata kiri dengan
+   tulisan judul (bukan dengan ikon jam), bukan menyempit berdesakan di
+   satu baris. */
+.admin-collapse-title-lines {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    min-width: 0;
+}
+
+.admin-timer-hint {
+    color: #8a8fa3;
+    font-size: 12.5px;
+    font-weight: 400;
+}
+
+@media (max-width: 480px) {
+    .admin-collapse-title-lines {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+}
+
+.admin-collapse-toggle-icon {
+    flex-shrink: 0;
+    color: #8a8fa3;
+    font-size: 13px;
+    transition: transform 0.2s ease;
+}
+
+.admin-collapse-card:not(.collapsed) .admin-collapse-toggle-icon {
+    transform: rotate(180deg);
+}
+
+.admin-collapse-body {
+    padding: 0 16px 16px;
+    border-top: 1.5px solid #eef0f4;
+    padding-top: 14px;
+}
+
+.admin-collapse-card.collapsed .admin-collapse-body {
+    display: none;
+}
+
+/* Bar "Batas Waktu Pengerjaan" itu sendiri, di dalam .admin-collapse-body
+   -- pakai tombol geser on/off (".admin-switch", sama komponennya dengan
+   yang dipakai toggle "Batas Waktu Pengerjaan" di modal Kelola Soal Kuis
+   per Bab), bukan lagi kotak durasi kosong = "tanpa batas waktu". */
+.admin-timer-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 13.5px;
+    color: var(--text-dark);
+}
+
+/* Bungkus form durasi ("menit") + tombol "Simpan" jadi SATU unit --
+   sebelumnya keduanya adalah item flex terpisah langsung di dalam
+   ".admin-timer-bar", jadi di layar lebar sedang (lebih sempit dari
+   desktop, tapi belum sesempit mobile) keduanya bisa "kepisah" waktu
+   flex-wrap aktif: form durasinya masih cukup ruang buat naik sejajar
+   dengan "Aktifkan batas waktu", tapi tombol "Simpan" sendirian yang
+   tidak muat lalu turun ke baris sendiri di bawahnya, kelihatan
+   nyempil/tidak sejajar dengan form di sampingnya. Dibungkus supaya
+   form durasi & tombol "Simpan" SELALU pindah baris BERSAMA-SAMA
+   (never keduanya kepisah) -- kalau ruang tidak cukup, satu unit ini
+   turun ke baris sendiri secara utuh, keduanya tetap sejajar satu sama
+   lain. */
+.admin-timer-durasi-action {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: nowrap;
+}
+
+.admin-timer-durasi-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-timer-bar input[type="number"] {
+    /* Sedikit lebih lebar dari sebelumnya -- sekarang tombol panah
+       naik/turun bawaan browser SENGAJA ditampilkan (diminta), jadi
+       perlu ruang ekstra biar tidak berdesakan dengan angkanya. */
+    width: 68px;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 8px;
+    padding: 7px 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Waktu "Aktifkan batas waktu" dimatikan: form durasi TETAP kelihatan
+   (tidak "display:none" lagi) -- cuma dibuat abu-abu & tidak bisa diisi,
+   supaya tombol "Simpan" di sebelahnya tidak ikut geser posisi tiap kali
+   togglenya diklik. */
+.admin-timer-durasi-nonaktif input[type="number"] {
+    background: #f6f8fb;
+    color: #b6bac5;
+    border-color: #eef0f4;
+    cursor: not-allowed;
+}
+
+.admin-timer-durasi-nonaktif span {
+    color: #b6bac5;
+}
+
+.admin-timer-save-btn {
+    padding: 7px 16px;
+    font-size: 13px;
+}
+
+.admin-bab-select {
+    max-width: 260px;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+/* --- Kartu tabel --- */
+.admin-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(23, 51, 80, 0.06);
+    overflow: hidden;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th {
+    background: #f6f8fb;
+    color: #8a8fa3;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 14px 18px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.admin-table td {
+    padding: 14px 18px;
+    border-top: 1px solid #eef1f6;
+    font-size: 14px;
+    color: var(--text-dark);
+    vertical-align: top;
+}
+
+.admin-table td.soal-text {
+    max-width: 420px;
+}
+
+/* Pembatas "maksimal 3 baris" (sama seperti daftar mini soal kuis, lihat
+   ".bab-kuis-soal-text") DITARUH DI DIV PEMBUNGKUS di dalam "td", BUKAN
+   di "td"-nya langsung -- soalnya "td" ini masih anggota tabel beneran
+   di layar besar, dan "display:-webkit-box" (dipakai buat line-clamp)
+   waktu ditaruh langsung di elemen table-cell bikin browser bingung
+   menghitung tinggi kotaknya (row lain di tabel yang sama, atau "td"
+   yang lebih tinggi karena kolom lain, bikin baris ke-4 tetap ikut
+   "bocor" kelihatan walau "overflow:hidden" sudah dipasang). Div
+   pembungkus polos ini tidak kena aturan tabel sama sekali, jadi
+   pembatasannya konsisten di layar besar MAUPUN kecil. Teks lengkapnya
+   tidak hilang, cuma disembunyikan secara visual -- tetap bisa dilihat
+   penuh lewat tooltip (atribut "title" di "td"-nya) atau tombol Edit. */
+.soal-text-clamp {
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* --- Gagang urut ulang (drag & drop) di kolom pertama tabel Kelola Soal --
+   dipakai ULANG ikon+gaya ".bab-kuis-soal-draghandle" yang sama dari
+   daftar mini soal kuis di modal Kelola Materi Bab, supaya konsisten. */
+.admin-soal-draghandle-cell {
+    text-align: center;
+    padding-left: 14px !important;
+    padding-right: 4px !important;
+}
+
+.admin-table tbody tr.dragging {
+    opacity: 0.4;
+}
+
+.admin-table tbody tr.drag-over {
+    background: rgba(12, 122, 110, 0.06);
+}
+
+.admin-row-actions {
+    display: flex;
+    gap: 8px;
+    white-space: nowrap;
+    /* Rata kanan -- kalau kolom "Aksi"-nya lebih lebar dari tombol-tombolnya
+       sendiri (mis. kolom "Aksi" di tabel Monitor Peserta yang dipaksa lebar
+       tetap 132px), tombolnya jangan nempel ke kiri kolom (bikin padding kanan
+       kelihatan lebih lega daripada padding kiri kolom nama di sisi lain
+       tabel) -- disamakan rata kanan supaya jaraknya ke tepi tabel konsisten
+       dengan jarak nama peserta ke tepi kiri tabel. */
+    justify-content: flex-end;
+}
+
+/* Header "Aksi" tabel Monitor Peserta -- kolomnya berisi 2 ikon (32px
+   masing-masing + gap 8px) yang dirata-kanan (lihat ".admin-row-actions" di
+   atas). Teks header "AKSI" SENGAJA tidak dirata-kanan penuh (itu bakal
+   nempel di atas ikon PALING KANAN/Reset) -- padding-right tambahan sebesar
+   lebar 1 ikon + gap (32px + 8px = 40px) di atas padding standar (18px)
+   dipakai supaya teks headernya pas nempel di atas ikon PALING KIRI/Export
+   XLSX, konsisten sama urutan baca ikonnya (kiri ke kanan). */
+.monitor-table th.monitor-aksi-header {
+    text-align: right;
+    padding-right: 58px;
+}
+
+.admin-icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    border: none;
+    background: #eef1f6;
+    color: var(--text-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.admin-icon-btn:hover {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.admin-icon-btn.danger:hover {
+    background: var(--danger-color);
+    color: #fff;
+}
+
+.admin-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #8a8fa3;
+}
+
+.admin-empty-state i {
+    font-size: 30px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.admin-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #8a8fa3;
+}
+
+.admin-loading i {
+    font-size: 26px;
+    color: var(--accent-color);
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* --- Modal form soal --- */
+.admin-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(23, 51, 80, 0.45);
+    z-index: 1400;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    /* Selalu sisakan ruang scrollbar milik backdrop ini sendiri, terlepas
+       dari isinya lagi butuh discroll atau tidak -- tanpa ini, dialog
+       yang isinya PAS muat (tanpa scrollbar) jadi ke-render sedikit lebih
+       lebar/ke tengah daripada dialog lain yang isinya lebih panjang
+       (butuh scrollbar), sehingga waktu dua modal ditumpuk (mis. Ubah Bab
+       lalu Kelola Soal Kuis) posisi kiri-kanannya jadi tidak sejajar.
+       Ini juga yang bikin scrollbar-nya "meloncat" dari tengah ke ujung
+       kanan sesaat setelah animasi buka modal selesai (waktu itu dialog
+       baru saja mencapai tinggi aslinya dan baru ketahuan butuh scroll).
+       Aman dipakai di sini (beda dengan <html>, lihat catatan di atas)
+       karena elemen ini sudah dari awal punya "overflow-y: auto" sendiri,
+       bukan digabung dengan overflow yang sudah dipaksa "scroll" duluan
+       oleh aturan lain. */
+    scrollbar-gutter: stable;
+    padding: 40px 16px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.admin-modal-backdrop.open {
+    display: flex;
+}
+
+/* Kelas "show" ditambahkan lewat JS sesaat setelah "open" (lihat
+   openAdminModal() di admin.js) supaya transition opacity/transform-nya
+   beneran ke-trigger oleh browser -- kalau langsung ditambahkan bareng
+   "open", browser sering menganggapnya sebagai state awal (tanpa animasi
+   masuk sama sekali) karena elemennya baru saja pindah dari display:none. */
+.admin-modal-backdrop.show {
+    opacity: 1;
+}
+
+/* Modal Tambah/Ubah Soal bisa dibuka DARI DALAM modal Tambah/Ubah Bab
+   (lewat "Tambah Soal Kuis" di bagian Kuis per Bab) -- kalau keduanya
+   kebetulan terbuka bersamaan, modal soal harus tampil di atas modal bab. */
+#soalModalBackdrop {
+    z-index: 1500;
+}
+
+/* Modal "Kelola Soal Kuis" dibuka DARI DALAM modal Tambah/Ubah Bab --
+   harus tampil di atas modal bab, tapi di BAWAH modal Tambah/Ubah Soal
+   (yang bisa dibuka lagi dari dalam modal ini). */
+#babKuisManageModalBackdrop {
+    z-index: 1450;
+}
+
+/* Dialog "Lihat" (rincian jawaban / riwayat percobaan) dibuka DARI DALAM
+   modal Detail Peserta (Monitor Peserta) -- harus tampil di atasnya. */
+#monitorReviewModalBackdrop {
+    z-index: 1500;
+}
+
+.admin-modal {
+    background: #fff;
+    border-radius: 18px;
+    width: 100%;
+    max-width: 560px;
+    padding: 28px 28px 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    transform: translateY(-14px) scale(0.97);
+    opacity: 0;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease;
+}
+
+.admin-modal-backdrop.show .admin-modal {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.admin-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.admin-modal-header h4 {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+/* Judul dialog "Lihat" (Pembahasan Kuis Bab X, Riwayat Percobaan Kuis Bab
+   X, Rincian Tes Diagnostik, Rincian Final Tryout) dibuat lebih kecil dari
+   ukuran h4 default -- SENGAJA discope ke #monitorReviewTitle saja supaya
+   tidak ikut mengecilkan judul modal admin lain (mis. Detail Peserta). */
+#monitorReviewTitle {
+    font-size: 16px;
+}
+
+.admin-modal-header-titlewrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.admin-modal-header-desc {
+    margin: 0;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #8a8fa3;
+}
+
+.admin-modal-header-desc:empty {
+    display: none;
+}
+
+/* Baris "Terdaftar: ..." di bawah email pada modal Detail Peserta */
+.monitor-detail-terdaftar i {
+    margin-right: 4px;
+}
+
+.admin-modal-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #8a8fa3;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.admin-modal-close:hover {
+    background: #eef1f6;
+}
+
+.admin-form-group {
+    margin-bottom: 14px;
+}
+
+.admin-form-group label {
+    display: block;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--primary-color);
+    margin-bottom: 6px;
+}
+
+.admin-form-group textarea,
+.admin-form-group input[type="text"],
+.admin-form-group input[type="number"],
+.admin-form-group input[type="password"],
+/* "url" (dipakai field Link YouTube, #f-bab-video) SEBELUMNYA kelewat
+   dari daftar ini -- jadinya tampil polos gaya bawaan browser (beda
+   sendiri dari field lain di form yang sama), padahal secara visual
+   harusnya seragam kotak teks biasa juga. */
+.admin-form-group input[type="url"],
+.admin-form-group select {
+    width: 100%;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--text-dark);
+    font-family: inherit;
+}
+
+.admin-form-group textarea:focus,
+.admin-form-group input:focus,
+.admin-form-group select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+/* Field kata sandi dengan tombol mata (show/hide) -- dipakai di modal Edit
+   Akun Peserta (Manajemen User). Class-nya (cn-input-wrap/has-eye-icon/
+   cn-toggle-eye) SENGAJA disamakan dengan field kata sandi di form Masuk/
+   Daftar (index.html) & Edit Profil peserta (dashboard.js), supaya tombol
+   matanya otomatis berfungsi lewat event delegation yang sudah ada di
+   js/transition.js (lihat listener "click" untuk ".cn-toggle-eye" di sana)
+   tanpa perlu javascript tambahan di sini. */
+.cn-input-wrap {
+    position: relative;
+}
+
+.cn-input-wrap input.has-eye-icon {
+    padding-right: 38px;
+}
+
+.cn-input-wrap .cn-toggle-eye {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    color: #98a0ad;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.cn-input-wrap .cn-toggle-eye:hover {
+    color: #566072;
+}
+
+/* Ikon centang (muncul begitu isinya valid) di field Email pada modal Edit
+   Akun Peserta -- class & perilakunya (cn-input-check-icon/"show") SENGAJA
+   disamakan dengan ikon centang di field email form Daftar (index.html). */
+.cn-input-wrap input.has-check-icon {
+    padding-right: 34px;
+}
+
+.cn-input-wrap .cn-input-check-icon {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    color: #0C7A6E;
+    font-size: 15px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+}
+
+.cn-input-wrap .cn-input-check-icon.show {
+    opacity: 1;
+}
+
+/* Border merah/hijau real-time (email & kata sandi baru) -- SAMA PERSIS
+   aturannya dengan ".form-control.cn-input-valid/.cn-input-invalid" di
+   css/style.css (dipakai form Daftar), cuma discope ke input polos
+   ".admin-form-group input" karena Panel Admin tidak memakai class
+   Bootstrap ".form-control". Keterangan di bawahnya (".cn-input-hint")
+   sudah otomatis kebagian style hijau/merahnya lewat aturan umum yang
+   sama di css/style.css (class-nya tidak discope ke ".form-control"). */
+.admin-form-group input.cn-input-valid {
+    border-color: #0C7A6E;
+}
+
+.admin-form-group input.cn-input-valid:focus {
+    box-shadow: 0 0 0 0.2rem rgba(12, 122, 110, 0.15);
+}
+
+.admin-form-group input.cn-input-invalid {
+    border-color: #d64550;
+}
+
+.admin-form-group input.cn-input-invalid:focus {
+    box-shadow: 0 0 0 0.2rem rgba(214, 69, 80, 0.15);
+}
+
+.admin-form-group .cn-input-hint {
+    margin-top: 6px;
+}
+
+.admin-option-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.admin-option-row input {
+    flex: 1;
+}
+
+.admin-option-row input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    accent-color: var(--accent-color);
+}
+
+/* Baris opsi jawaban dinamis (Kuis per Bab) -- tata letaknya sudah SAMA
+   dengan .admin-option-row biasa (radio di depan, lalu kotak teks), cuma
+   beda ada tombol hapus di ujung karena jumlah opsinya bisa berapapun
+   (Tes Diagnostik/Tryout selalu tetap 4 opsi A-D, jadi tidak perlu). */
+.admin-option-row-dinamis .admin-icon-btn {
+    flex-shrink: 0;
+}
+
+.admin-form-hint {
+    font-size: 12px;
+    color: #8a8fa3;
+    margin: -6px 0 14px;
+    line-height: 1.5;
+}
+
+/* =================================================================
+   RICH TEXT EDITOR (Bold/Italic/Underline/Daftar) untuk field soal,
+   pilihan jawaban, pembahasan, dan teks materi.
+
+   Pola: elemen asli (<textarea>/<input>) TETAP ada di DOM sebagai
+   "sumber nilai" (dibaca/ditulis lewat .value seperti biasa oleh semua
+   kode lain di file ini), tapi disembunyikan (.rich-source-hidden).
+   Di sebelahnya ditaruh <div contenteditable> yang tampil ke admin dan
+   disinkronkan dua arah lewat richify() di bagian bawah file ini.
+   ================================================================= */
+.rich-source-hidden {
+    display: none !important;
+}
+
+.rich-editable {
+    width: 100%;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--text-dark);
+    font-family: inherit;
+    line-height: 1.5;
+    cursor: text;
+}
+
+.rich-editable:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.rich-editable:empty::before {
+    content: attr(data-placeholder);
+    color: #a7acbb;
+}
+
+.rich-editable ul,
+.rich-editable ol {
+    margin: 6px 0 6px 20px;
+}
+
+/* Preview di dalam editor untuk elemen tambahan (gambar/heading/link/
+   tabel) -- lihat sisipGambarMateri/sisipTabelMateri/sisipLinkMateri dkk
+   di admin.js. Gaya tampilan FINAL untuk peserta ada di css/materi.css
+   & css/quiz.css masing-masing, ini cuma supaya enak dilihat admin saat
+   mengetik. */
+/* max-height dibatasi supaya gambar beresolusi tinggi/berorientasi
+   potret tidak membuat kotak edit materi jadi sangat tinggi (lebar
+   saja tidak cukup dibatasi -- proporsinya bisa tetap sangat tinggi).
+   Ini CUMA batas tampilan preview di kotak edit admin -- file gambar
+   ASLI yang diunggah & disimpan tidak diperkecil/dipotong sama sekali,
+   jadi tampilan untuk peserta (css/materi.css, tanpa max-height) tetap
+   menampilkan gambar penuh. */
+.rich-editable img {
+    max-width: 100%;
+    max-height: 220px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 6px;
+    display: block;
+    margin: 6px 0;
+}
+
+/* Petunjuk visual: gambar di kotak edit materi bisa di-resize dengan
+   nge-drag pojok kanan-bawahnya (lihat initImageResize di admin.js) --
+   garis putus-putus muncul waktu mouse lewat gambarnya supaya kelihatan
+   kalau ini interaktif. */
+.rich-editable img:hover {
+    outline: 2px dashed var(--accent-color);
+    outline-offset: -2px;
+}
+
+/* Dipasang/dilepas oleh initImageResize() di admin.js lewat classList
+   (BUKAN langsung .style.cursor) waktu mouse persis di pojok kanan-bawah
+   gambar -- supaya atribut "style" gambar (yang dipakai juga buat
+   menyimpan lebar hasil resize, lihat sanitizeRichHtmlAdmin) tidak ikut
+   kotor dengan properti CSS lain. */
+.rich-img-resize-hover {
+    cursor: nwse-resize;
+}
+
+.rich-editable h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 10px 0 6px;
+}
+
+.rich-editable h3 {
+    font-size: 15.5px;
+    font-weight: 700;
+    margin: 8px 0 4px;
+}
+
+.rich-editable a {
+    color: var(--accent-color);
+    text-decoration: underline;
+}
+
+/* table-layout: fixed supaya lebar kolom (<col> di dalam <colgroup>, lihat
+   sisipTabelMateri/initTableColumnResize di admin.js) benar-benar dipakai
+   apa adanya -- tanpa ini browser cenderung mengabaikan lebar <col> &
+   menyesuaikan sendiri berdasar isi tiap sel. */
+.rich-editable table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+    margin: 8px 0;
+}
+
+/* Wrapper scroll untuk tabel di kotak edit -- dipasang otomatis lewat JS
+   (pastikanTabelBisaScroll di admin.js) supaya tabel yang kolom-kolomnya
+   tidak muat (mis. saat mengedit di layar HP) bisa digeser ke samping,
+   bukan dipepetkan sampai isinya berantakan. Wrapper ini dibuang lagi
+   sebelum disimpan (lihat unwrap ".rich-table-scroll" di
+   sanitizeRichHtmlAdmin) supaya tidak menumpuk div tiap buka-simpan ulang. */
+.rich-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+}
+
+.rich-editable th,
+.rich-editable td {
+    border: 1px solid #e2e5ec;
+    padding: 6px 8px;
+    font-size: 13px;
+    min-width: 24px;
+    /* table-layout:fixed di atas bikin lebar kolom kaku sesuai <col> --
+       teks panjang di sel sempit dipaksa pindah baris (bukan meluber ke
+       luar/mendorong lebar kolom lain). */
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.rich-editable th {
+    background: #f6f8fb;
+    font-weight: 600;
+}
+
+/* Versi 1 baris (pilihan jawaban A/B/C/D & opsi dinamis) -- tetap bisa
+   ditebalkan/dimiringkan tapi tombol Enter tidak bikin baris baru
+   (dicegah lewat JS), supaya tingginya tetap konsisten seperti input
+   biasa. */
+.rich-editable-inline {
+    min-height: 20px;
+}
+
+.admin-option-row .rich-editable-inline,
+.admin-option-row-dinamis .rich-editable-inline {
+    flex: 1;
+}
+
+/* Toolbar mengambang -- satu toolbar dipakai bersama, dipindah-pindah
+   posisinya ke atas field yang lagi difokus (bukan bikin toolbar
+   terpisah di tiap field, supaya tidak berantakan waktu opsi jawaban
+   banyak). */
+.rich-toolbar {
+    display: none;
+    position: absolute;
+    z-index: 3000;
+    background: #1e2433;
+    border-radius: 8px;
+    padding: 4px;
+    gap: 2px;
+    flex-wrap: wrap;
+    align-items: center;
+    /* box-sizing:border-box supaya "width" yang dipasang lewat JS (dibuat
+       PAS sama dengan lebar kotak edit, lihat positionRichToolbar) sudah
+       termasuk padding-nya sendiri -- tanpa ini, lebar akhirnya (setelah
+       ditambah padding kiri+kanan) jadi sedikit lebih lebar dari field,
+       balik lagi kepotong/tidak simetris di layar sempit. */
+    box-sizing: border-box;
+    max-width: 92vw;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.rich-toolbar button {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    border-radius: 5px;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.rich-toolbar button:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Tombol Judul/Sub Judul (H2/H3) pakai label teks, bukan ikon -- FontAwesome
+   tidak punya ikon khusus yang jelas membedakan level heading. */
+.rich-toolbar-text-btn {
+    font-weight: 700;
+    font-family: inherit;
+}
+
+.rich-toolbar-sep {
+    width: 1px;
+    align-self: stretch;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 3px 2px;
+}
+
+/* Dropdown ukuran teks (khusus kotak teks materi) -- disamakan tinggi &
+   warnanya dengan tombol-tombol lain di toolbar supaya menyatu. */
+.rich-toolbar-fontsize {
+    height: 28px;
+    max-width: 104px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 12px;
+    padding: 0 4px;
+    cursor: pointer;
+}
+
+.rich-toolbar-fontsize:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.rich-toolbar-fontsize option {
+    color: #1e2433;
+}
+
+.admin-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+/* Tombol "Batal" & "Simpan" di footer modal SEBELUMNYA tidak dibatasi
+   lebar/dijaga sama sekali -- kalau suatu saat teks tombol "Simpan"
+   berubah jadi lebih panjang dari biasanya, tombolnya ikut melebar
+   sesuai panjang teksnya (lebar tombol flex item defaultnya ngikutin
+   ukuran konten), bisa jadi lebih lebar dari layar & terpotong di layar
+   sempit/HP -- footer-nya sendiri tidak flex-wrap juga, jadi dua
+   tombolnya dipaksa tetap sejajar 1 baris walau sudah tidak muat.
+   min-width:0 (lawan dari default flex item "min-width:auto" yang
+   ngikutin lebar konten) + flex-wrap di bawah dipasang sebagai JAGA-JAGA
+   (defensif) -- tombolnya jadi BOLEH menyusut/pindah baris seperlunya,
+   teks yang kepanjangan dipotong rapi pakai "..." (text-overflow:
+   ellipsis) bukan meluber keluar modal, biarpun dalam pemakaian normal
+   sekarang teks tombolnya selalu pendek & tetap (lihat progress bar
+   terpisah ".admin-upload-progress-wrap" di bawah -- persentase upload
+   sekarang divisualkan di situ, BUKAN lagi ditulis di teks tombol,
+   supaya tombolnya tidak perlu berubah ukuran sama sekali). */
+.admin-modal-footer {
+    flex-wrap: wrap;
+}
+
+.admin-modal-footer .admin-btn-primary,
+.admin-modal-footer .admin-btn-secondary {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Progress bar tipis upload video/file materi -- ditaruh di atas footer
+   tombol (lihat markup-nya di admin.html, #babUploadProgressWrap).
+   Disembunyikan (display:none) secara default lewat inline style di
+   HTML-nya, cuma dimunculkan (lewat JS, .style.display = 'block') pas
+   unggahFileVideoBabPending() di js/admin.js benar-benar mulai
+   mengunggah -- lebarnya (.admin-upload-progress-bar) diupdate real-time
+   sesuai event "progress" dari XMLHttpRequest di fungsi yang sama. */
+/* Label teks + persentase di ATAS progress bar-nya -- ditaruh terpisah
+   dari bar-nya sendiri (bukan ditulis di dalam bar) supaya angkanya
+   tetap kebaca jelas dengan ukuran font normal, tidak perlu dipaksa
+   muat di dalam bar setinggi 6px. Sama seperti bar-nya, disembunyikan
+   default lewat inline style, dimunculkan/diupdate oleh JS di
+   unggahFileVideoBabPending() (js/admin.js) pas upload berjalan. */
+.admin-upload-progress-label {
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: var(--text-dark);
+}
+
+.admin-upload-progress-label #babUploadProgressPercent {
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.admin-upload-progress-wrap {
+    width: 100%;
+    height: 6px;
+    background: #eef1f6;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+
+/* Reset tampilan bawaan <fieldset> (border abu-abu bawaan browser,
+   margin kiri-kanan, padding) supaya isinya tetap terlihat sama persis
+   seperti sebelum dibungkus fieldset -- fieldset-nya sendiri dipakai
+   murni untuk fitur "disabled" bawaannya yang otomatis mengunci semua
+   input/textarea/select/button di dalamnya sekaligus (lihat
+   #babFormFieldset di admin.html & submitBabForm() di js/admin.js). */
+.admin-fieldset-reset {
+    border: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+/* Pas fieldset-nya dikunci (disabled) selagi proses Simpan/unggah
+   berjalan, isinya dibikin agak pudar supaya kelihatan jelas kalau
+   memang lagi tidak bisa diapa-apakan (bukan cuma diam tanpa penanda
+   apa pun). Kolom teks materi/judul dkk yang bentuknya <div
+   contenteditable> tidak ikut terkunci otomatis oleh fieldset (fieldset
+   cuma berlaku ke elemen form asli), makanya "pointer-events: none"
+   juga ditambahkan di sini supaya area itu juga tidak bisa diklik buat
+   mulai ngetik -- contentEditable-nya sendiri ikut dimatikan lewat JS
+   di submitBabForm(). */
+.admin-fieldset-reset:disabled {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.admin-upload-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--accent-color);
+    border-radius: 4px;
+    /* Transisi halus tiap kali lebarnya diupdate (tiap event "progress"),
+       bukan patah-patah lompat langsung ke angka barunya. */
+    transition: width 0.15s linear;
+}
+
+/* Nama file yang dipilih lewat <input type="file"> browser BAWAAN
+   sengaja disembunyikan (bukan cuma dipotong "...") -- nama file itu
+   sudah ditampilkan sendiri di badge/list di atasnya (admin-ppt-current
+   utk video, admin-file-materi-list utk file materi), jadi kalau nama
+   filenya juga masih dicetak ulang persis di sebelah tombol "Choose
+   File" ini jadinya ganda/menuh-menuhin, apalagi di layar sempit teks
+   itu gampang kepotong.
+   "color: transparent" ini TIDAK menyembunyikan tombol "Choose File"-nya
+   sendiri (itu tombol bawaan browser, warnanya diatur terpisah oleh
+   browser, bukan ikut CSS elemen), cuma teks nama file di sebelahnya
+   yang jadi transparan/tak-terlihat -- sudah dicoba & dicek langsung di
+   browser, ini caranya paling ringan & konsisten dibanding
+   membungkus-ulang input-nya jadi tombol custom sendiri. */
+.admin-file-input-notext {
+    color: transparent;
+}
+
+.admin-btn-secondary {
+    background: #eef1f6;
+    color: var(--text-dark);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+}
+
+.admin-btn-secondary:hover {
+    background: #e2e5ec;
+    color: var(--text-dark);
+}
+
+/* --- Info file PPT/PPTX/PDF di modal Kelola Materi Bab --- */
+.admin-ppt-current {
+    display: flex;
+    align-items: center;
+    /* flex-wrap:wrap -- SEBELUMNYA baris ini dipaksa selalu 1 baris,
+       padahal isinya ada yang boleh menyusut (nama file, flex:1) DAN ada
+       yang TIDAK BOLEH menyusut sama sekali (hint "akan diunggah..." &
+       tombol "Batalkan"/"Hapus", flex-shrink:0 di bawah). Kalau nama
+       filenya panjang (mis. nama video hasil download yang panjang) di
+       layar sempit/HP, nama filenya sampai ketekan sampai lebarnya 0
+       (teksnya jadi tidak kelihatan sama sekali) TAPI hint+tombolnya
+       tetap saja tidak cukup ruang, jadi ikut kepotong/meluber keluar
+       kotak (bahkan sampai keluar modal). flex-wrap:wrap membiarkan
+       hint & tombolnya pindah ke baris baru sendiri kalau memang sudah
+       tidak muat sejajar dengan nama filenya, bukan dipaksa 1 baris terus
+       ke mana pun ujungnya. */
+    flex-wrap: wrap;
+    gap: 10px;
+    background: #f6f8fb;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    font-size: 13.5px;
+    color: var(--text-dark);
+}
+
+.admin-ppt-current i.fa-file-lines {
+    color: var(--accent-color);
+    font-size: 16px;
+}
+
+.admin-ppt-current i.fa-clock {
+    color: #b7791f;
+    font-size: 16px;
+}
+
+.admin-ppt-current i.fa-file-video {
+    color: var(--accent-color);
+    font-size: 16px;
+}
+
+/* --- Pilihan mode Video (Link YouTube / Upload File Video) di modal
+   Kelola Materi Bab --- */
+.admin-toggle-group {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 10px;
+}
+
+.admin-toggle-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    color: var(--text-dark);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.admin-toggle-option input[type="radio"] {
+    accent-color: var(--accent-color);
+    cursor: pointer;
+}
+
+.admin-ppt-current .admin-ppt-nama {
+    flex: 1;
+    /* min-width mencegah nama filenya ketekan sampai lebar 0 (jadi
+       tidak kelihatan sama sekali) SEBELUM flex-wrap di ".admin-ppt-
+       current" sempat mindahin hint/tombol ke baris baru -- dengan
+       batas bawah ini, begitu ruangnya sudah kurang dari ~90px, baris
+       nama file langsung "menang" ruang segini dulu, sisanya (hint +
+       tombol) yang dipindah ke baris berikutnya. */
+    min-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-ppt-current .admin-ppt-hapus {
+    background: none;
+    border: none;
+    color: var(--danger-color);
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.admin-ppt-current .admin-ppt-hapus:hover {
+    text-decoration: underline;
+}
+
+/* File PPT yang baru dipilih tapi belum diunggah (menunggu "Simpan Bab") */
+.admin-ppt-current .admin-ppt-pending-hint {
+    flex-shrink: 0;
+    color: #b7791f;
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* --- Toggle "Ada Kuis untuk Bab Ini" di modal Kelola Materi Bab --- */
+.admin-form-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #f6f8fb;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.admin-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.admin-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.admin-switch-slider {
+    position: absolute;
+    inset: 0;
+    background: #c3c8d4;
+    border-radius: 22px;
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.admin-switch-slider::before {
+    content: "";
+    position: absolute;
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.2s;
+}
+
+.admin-switch input:checked+.admin-switch-slider {
+    background: var(--accent-color);
+}
+
+.admin-switch input:checked+.admin-switch-slider::before {
+    transform: translateX(18px);
+}
+
+/* --- Daftar mini soal kuis di dalam modal Kelola Materi Bab --- */
+.bab-kuis-soal-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 13.5px;
+    transition: border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.bab-kuis-soal-draghandle {
+    flex-shrink: 0;
+    color: #c3c8d4;
+    cursor: grab;
+    padding: 2px 2px 2px 0;
+    margin-top: 2px;
+}
+
+.bab-kuis-soal-draghandle:active {
+    cursor: grabbing;
+}
+
+.bab-kuis-soal-row.dragging {
+    opacity: 0.4;
+}
+
+.bab-kuis-soal-row.drag-over {
+    border-color: var(--accent-color);
+    background: rgba(12, 122, 110, 0.06);
+}
+
+.bab-kuis-soal-nomor {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #f6f8fb;
+    color: #8a8fa3;
+    font-weight: 700;
+    font-size: 12px;
+    margin-top: 1px;
+}
+
+.bab-kuis-soal-row .bab-kuis-soal-text {
+    flex: 1;
+    /* min-width:0 wajib ada -- tanpa ini, flex item defaultnya tidak mau
+       menyusut lebih kecil dari lebar minimum kontennya (kata/frasa
+       terpanjang yang tidak bisa dipenggal), jadi di layar sempit teks
+       ini bisa "mendorong" tombol Ubah/Hapus di sebelahnya sampai keluar
+       dari kartu. */
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--text-dark);
+    /* Soal yang teksnya panjang bikin kartunya ikut jadi tinggi banget,
+       jadi daftar soal per bab (bisa puluhan) scroll-nya kepanjangan.
+       Batasi tampilan tiap kartu maksimal 3 baris + "..." di akhir kalau
+       lebih -- teks lengkapnya tetap ada (bukan dihapus, cuma disembunyikan
+       secara visual), dan tetap bisa dilihat penuh lewat tooltip (atribut
+       "title") atau dengan membuka tombol Ubah. */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* --- Paginasi daftar soal kuis (10 soal/halaman) di modal "Kelola Soal Kuis" --- */
+.bab-kuis-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+/* Khusus paginasi di halaman Kelola Soal (#soal-pagination): elemen ini
+   dirender sebagai baris terakhir langsung di dalam .admin-card, yang
+   TIDAK punya padding sendiri (overflow:hidden, tabelnya memenuhi kartu
+   sampai ke tepi) -- tanpa jarak tambahan di sini, teks "Halaman x/y"
+   jadi terlihat mepet ke tepi bawah kartu. Modal "Kelola Soal Kuis"
+   tidak kena aturan ini (sudah punya padding dari .admin-modal sendiri).*/
+#soal-pagination {
+    padding: 14px 16px 18px;
+}
+
+.bab-kuis-pagination button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bab-kuis-pagination button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* --- Badge status materi (Teks/Video/PPT ada atau belum) di tabel Kelola Materi Bab --- */
+.admin-materi-status {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.admin-materi-status span {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.admin-materi-status span.ada {
+    background: rgba(12, 122, 110, 0.12);
+    color: var(--accent-color);
+}
+
+.admin-materi-status span.belum {
+    background: #eef1f6;
+    color: #b0b5c2;
+}
+
+@media (max-width: 991.98px) {
+    .admin-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .admin-sidebar.open {
+        transform: translateX(0);
+    }
+
+    /* Perkecil/perbesar sidebar cuma fitur desktop -- di layar sempit,
+       sidebar sudah punya caranya sendiri (overlay penuh via tombol
+       hamburger di admin-mobile-topbar), jadi tombol ini disembunyikan
+       supaya tidak bentrok/dobel. */
+    .admin-sidebar-collapse-btn {
+        display: none;
+    }
+
+    .admin-main {
+        margin-left: 0;
+        padding: 20px 18px 50px;
+    }
+
+    .admin-footer {
+        margin: 32px -18px -50px;
+        margin-top: auto; /* lihat catatan di ".admin-footer" versi desktop */
+    }
+
+    .admin-footer.site-footer-minimal {
+        padding: 18px;
+    }
+
+    .admin-mobile-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #fff;
+        padding: 14px 18px;
+        border-radius: 14px;
+        box-shadow: 0 4px 20px rgba(23, 51, 80, 0.07);
+        margin-bottom: 22px;
+    }
+
+    .admin-mobile-topbar img {
+        height: 30px;
+    }
+
+    .admin-mobile-toggle {
+        background: #eef1f6;
+        border: none;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        color: var(--primary-color);
+    }
+
+    .admin-sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 999;
+        display: none;
+    }
+
+    .admin-sidebar-backdrop.open {
+        display: block;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .admin-table thead {
+        display: none;
+    }
+
+    .admin-table,
+    .admin-table tbody,
+    .admin-table tr,
+    .admin-table td {
+        display: block;
+        width: 100%;
+    }
+
+    /* Jarak & garis pemisah antar kartu -- ini dipakai SEMUA tabel
+       "admin-table" (Kelola Soal maupun Kelola Materi), makanya tetap di
+       aturan generik ini (bukan ikut pindah ke ".soal-table tr" di
+       bawah, yang cuma menimpa bagian "display/grid"-nya saja khusus
+       Kelola Soal). Sempat tidak sengaja ikut kehapus dari sini waktu
+       dipisah kemarin -- itu yang bikin kartu Kelola Materi jadi
+       "mepet"/tanpa jarak & garis pemisah seperti semula. */
+    .admin-table tr {
+        padding: 14px 18px;
+        border-top: 1px solid #eef1f6;
+    }
+
+    /* Tabel "Kelola Soal" (Tes Diagnostik/Final Tryout/Kuis, penanda
+       kelas ".soal-table") PUNYA kartunya sendiri yang lebih rumit
+       (gagang-drag + nomor + teks + poin diatur presisi lewat grid, di
+       bawah) -- tabel-tabel "admin-table" LAIN (mis. ".bab-table" di
+       Kelola Materi) TIDAK ikut berubah, tetap pakai susunan block polos
+       di atas seperti semula. Ini sengaja aturan TERPISAH (bukan
+       menimpa langsung ".admin-table tr" di atas) supaya perubahan
+       tampilan kartu "Kelola Soal" tidak "ketularan" ke tabel lain yang
+       kebetulan sama-sama pakai kelas ".admin-table" (dan bahkan sama-
+       sama pakai nama kolom ".soal-text" juga, lihat catatan di kolom
+       teks soal di bawah). */
+    /* "tr" tabel Kelola Soal dijadikan grid-container (bukan flex) --
+       susunan yang diminta itu dua sumbu sekaligus (gagang-drag sejajar
+       SATU BARIS dengan teks soal, tapi nomor soal & poin masing-masing
+       baris SENDIRI, keduanya rata kiri sejajar dengan awal teks soal,
+       BUKAN dengan gagang-drag di depannya) -- ini lebih gampang & pasti
+       benar lewat grid (kolom 1 = lebar gagang-drag secukupnya, kolom 2
+       = sisanya) daripada terus menambah "order" di flex.
+       Kolom 1 ("auto"): cuma dipakai gagang-drag, di baris yang sejajar
+       teks soal.
+       Kolom 2 ("1fr"): nomor soal (baris 1), teks soal (baris 2), poin
+       (baris 3) -- ketiganya di kolom yang SAMA jadi rata kiri satu
+       sama lain.
+       Baris 4 (tombol Ubah/Hapus) melebar penuh (dua kolom) di bawahnya. */
+    .soal-table tr {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        column-gap: 8px;
+        row-gap: 2px;
+        /* padding & border-top sudah dari aturan generik ".admin-table
+           tr" di atas -- tidak perlu diulang di sini. */
+    }
+
+    .admin-table td {
+        border-top: none;
+        padding: 4px 0;
+        /* Baris tabel dirender lewat template string dengan lebar kolom
+           inline (style="width:...px", buat tampilan desktop) -- lebar
+           inline itu SELALU menang lawan aturan CSS biasa, jadi tanpa
+           !important di sini tiap kolom di tampilan kartu mobile tetap
+           kekunci sempit sesuai lebar desktop-nya (kolom aksi jadi cuma
+           110px, dst) -- makanya misalnya tombol Ubah/Hapus tidak bisa
+           didorong ke kanan (justify-content:flex-end tidak ada ruang
+           buat "mendorong"). !important di sini yang membatalkan lebar
+           inline itu KHUSUS di layar kecil ini -- posisi & lebar
+           sebenarnya tiap kolom sekarang murni diatur lewat
+           "grid-column"/"grid-row" di bawah, bukan lewat "width" lagi. */
+        width: 100% !important;
+    }
+
+    /* Dulu teks soal dibedakan (bold + warna aksen) khusus di layar
+       kecil supaya lebih menonjol sebagai "judul kartu" -- disamakan
+       lagi dengan tampilan layar besar (berat huruf & warna biasa) atas
+       permintaan, jadi baris di bawah cukup membatalkan bagian itu saja
+       ("max-width:none"-nya tetap perlu, karena batas lebar 420px versi
+       desktop tidak relevan lagi waktu kolom ini sudah selebar kartu). */
+    .admin-table td.soal-text {
+        max-width: none;
+    }
+
+    /* Properti grid di bawah ini KHUSUS tabel Kelola Soal (".soal-table")
+       -- kolom "Bab" di tabel Kelola Materi kebetulan pakai nama kelas
+       ".soal-text" yang sama (buat styling lebar generik yang sama),
+       tapi tabel itu TIDAK ikut grid (tr-nya tetap "display:block" biasa
+       per aturan generik di atas), jadi "grid-column"/"grid-row" di sini
+       tidak relevan/tidak berpengaruh apa-apa untuknya kalau ditaruh di
+       aturan generik -- makanya sengaja dipisah ke sini supaya jelas
+       cuma utk Kelola Soal. */
+    .soal-table td.soal-text {
+        grid-column: 2;
+        grid-row: 2;
+        min-width: 0;
+    }
+
+    /* Nomor soal: baris PALING ATAS, di kolom ke-2 (sejajar/rata kiri
+       dengan teks soal & poin di bawahnya -- BUKAN sejajar dengan
+       gagang-drag di kolom 1). */
+    .admin-table td.admin-soal-nomor-cell {
+        grid-column: 2;
+        grid-row: 1;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    /* Label "No " di depan angkanya -- tabel desktop sudah punya judul
+       kolom "NO" sendiri (header tabel), tapi header itu disembunyikan
+       di kartu layar kecil (".admin-table thead{display:none}"), jadi
+       tanpa label ini angkanya sendirian kelihatan kosong/tidak jelas
+       konteksnya. Dipasang lewat "::before" (bukan diubah di JS) supaya
+       cuma muncul di layar kecil, sama seperti pola label "Poin: " di
+       bawah. */
+    .admin-soal-nomor-cell::before {
+        content: "No. ";
+        color: #8a8fa3;
+        font-weight: 700;
+    }
+
+    /* Label "NPS: " di depan angka skor NPS (kolom "NPS" tabel Umpan
+       Balik) -- judul kolomnya sendiri disembunyikan di kartu layar
+       kecil ini (".admin-table thead{display:none}" di atas), jadi
+       tanpa label ini angkanya ("7/10") kelihatan sendirian tanpa
+       konteks. Pola SAMA dengan ".admin-soal-nomor-cell::before" di atas
+       & label "Poin: " di bawah. */
+    .ub-nps-cell::before {
+        content: "NPS: ";
+        color: #8a8fa3;
+        font-weight: 700;
+    }
+
+    /* Gagang drag: kolom 1, di baris yang SAMA dengan teks soal (baris
+       2) -- sejajar horizontal dengan teks soal seperti diminta,
+       terpisah dari nomor yang sekarang pindah ke baris atas sendiri.
+       Drag-and-drop lewat sentuhan/touch memang tidak bisa diandalkan,
+       jadi di layar kecil ikon ini murni penanda visual "bisa diurutkan
+       lewat versi desktop", bukan lagi target geser aktif -- makanya
+       "cursor:grab" bawaan dari ".bab-kuis-soal-draghandle" tidak
+       berpengaruh di sini (tidak ada kursor di layar sentuh). */
+    .admin-table td.admin-soal-draghandle-cell {
+        grid-column: 1;
+        grid-row: 2;
+        padding-left: 0 !important;
+        display: flex;
+        align-items: flex-start;
+        margin-top: 3px;
+    }
+
+    .admin-soal-draghandle-cell .bab-kuis-soal-draghandle {
+        font-size: 12px;
+    }
+
+    /* --- Label "Poin: " di depan nilai poin -- kolom "POIN" di tabel
+       desktop sudah punya judul kolomnya sendiri (header tabel), tapi
+       header itu disembunyikan di kartu layar kecil ini (lihat
+       ".admin-table thead{display:none}" di atas), jadi nilainya perlu
+       diberi label sendiri di sini supaya tetap jelas artinya. Dipasang
+       lewat "::before" (bukan diubah di JS) supaya tampilan desktop --
+       yang sudah punya header kolom "POIN" -- tidak ikut menampilkan
+       label yang jadi berulang ("POIN" lalu "Poin: ..." lagi di
+       bawahnya). Ditaruh di baris ke-3, kolom ke-2 yang sama dengan
+       nomor & teks soal di atasnya -- rata kiri sejajar dengan soal. */
+    .admin-soal-poin-cell {
+        grid-column: 2;
+        grid-row: 3;
+        text-align: left !important;
+    }
+
+    .admin-soal-poin-cell::before {
+        content: "Poin: ";
+        color: #8a8fa3;
+    }
+
+    /* Tombol Ubah/Hapus (khusus tabel Kelola Soal): baris ke-4, melebar
+       penuh dua kolom (supaya tetap bisa didorong rata kanan lewat
+       ".admin-row-actions" di bawah, terlepas dari sempitnya kolom
+       gagang-drag di sampingnya). Tabel Kelola Materi cuma py 4 kolom
+       (bukan 5), jadi selektor ini otomatis tidak kena di situ -- tetap
+       diberi awalan ".soal-table" supaya eksplisit. */
+    .soal-table tr td:nth-child(5) {
+        grid-column: 1 / 3;
+        grid-row: 4;
+    }
+
+    /* Tombol Ubah/Hapus ditaruh di kanan bawah tiap kartu (bukan
+       menempel rata kiri seperti sebelumnya) supaya lebih rapi dipandang
+       waktu tabel berubah jadi kartu di layar kecil. */
+    .admin-row-actions {
+        margin-top: 8px;
+        justify-content: flex-end;
+    }
+
+    /* --- Badge "Bab N" di kartu Kelola Materi (cuma di layar kecil --
+       di tabel desktop tetap tampil sebagai angka polos di kolom "No") ---
+       Badge-nya ditaruh di baris/kolom-nya SENDIRI di ATAS judul bab
+       (bukan sejajar di sebelahnya) -- jadi cukup ikut alur block biasa
+       dari aturan ".admin-table td { display:block; width:100% }" di
+       atas, tidak perlu diubah jadi flex-row. */
+    .bab-table tbody tr td:nth-child(1) {
+        margin-bottom: 6px;
+        /* Kolom ini punya "text-align:center" inline (buat tampilan
+           kolom "No" di tabel desktop) yang lebih kuat dari CSS biasa --
+           !important di sini yang membatalkannya KHUSUS di layar kecil
+           ini supaya badge "Bab N" rata kiri, bukan di tengah. */
+        text-align: left !important;
+    }
+
+    .bab-table .bab-nomor-badge {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(12, 122, 110, 0.1);
+        color: var(--accent-color);
+        font-weight: 700;
+        font-size: 12.5px;
+        padding: 4px 14px;
+        border-radius: 20px;
+    }
+
+    .bab-table .bab-nomor-badge::before {
+        /* margin-right dipakai (bukan spasi nyambung di dalam "content")
+           -- spasi biasa di akhir string "content" gampang "dimakan"
+           browser waktu elemennya inline-flex, jadi angkanya kelihatan
+           nempel ("Bab1", bukan "Bab 1"). */
+        content: "Bab";
+        margin-right: 4px;
+    }
+
+    /* Label "Tes Diagnostik:"/"Final Tryout:" di depan pil status (kolom
+       Diagnostik/Tryout tabel Monitor Peserta) -- di kartu layar kecil
+       judul kolomnya (header tabel) ikut disembunyikan, jadi tanpa label
+       ini pil "Selesai"/"Belum Mulai" kelihatan tidak jelas punya bagian
+       yang mana. Ditaruh SEJAJAR (bukan di atas) pil-nya, sesuai
+       permintaan "di sebelah". */
+    .monitor-status-mobile-label {
+        /* "!important" perlu di sini -- aturan dasar ".monitor-status-
+           mobile-label { display:none }" (skala global, tanpa media
+           query) letaknya lebih ke bawah di file ini (dekat definisi
+           ".monitor-status-pill"), jadi tanpa "!important" aturan dasar
+           itu yang menang di layar kecil (spesifisitas sama, urutan
+           sumber yang menentukan). */
+        display: inline-block !important;
+        font-size: 12px;
+        font-weight: 700;
+        color: #8a8fa3;
+        margin-right: 6px;
+    }
+}
+
+/* =================================================================
+   MONITOR PESERTA
+   ================================================================= */
+.admin-page-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.admin-page-header-actions .admin-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Dropdown "Export" (pilihan CSV/XLSX) di header Monitor Peserta --
+   nyamain style dropdown bawaan Bootstrap dengan tampilan admin (rounded,
+   shadow lembut, warna aksen), bukan tampilan default Bootstrap. */
+.admin-page-header-actions .dropdown-menu {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(23, 51, 80, 0.14);
+    padding: 6px;
+    min-width: 240px;
+}
+
+.admin-page-header-actions .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #37415a;
+}
+
+.admin-page-header-actions .dropdown-item i {
+    width: 16px;
+    text-align: center;
+    color: var(--primary-color);
+}
+
+.admin-page-header-actions .dropdown-item:hover,
+.admin-page-header-actions .dropdown-item:focus {
+    background: #f2f4fb;
+    color: var(--primary-color);
+}
+
+/* --- Kartu ringkasan statistik di atas tabel --- */
+.monitor-stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.monitor-stat-card {
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 10px rgba(23, 51, 80, 0.05);
+}
+
+/* Ikon dekoratif di pojok kanan-bawah tiap kartu, biar gak kosong --
+   besar & transparan supaya angka/labelnya tetap yang paling menonjol. */
+.monitor-stat-card .monitor-stat-icon {
+    position: absolute;
+    right: -8px;
+    bottom: -12px;
+    font-size: 56px;
+    color: var(--primary-color);
+    opacity: 0.09;
+    pointer-events: none;
+    line-height: 1;
+}
+
+.monitor-stat-card .monitor-stat-value {
+    position: relative;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1.2;
+}
+
+.monitor-stat-card .monitor-stat-label {
+    position: relative;
+    font-size: 12.5px;
+    color: #8a8fa3;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.monitor-stat-card.clickable {
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.monitor-stat-card.clickable:hover {
+    box-shadow: 0 4px 16px rgba(23, 51, 80, 0.1);
+    transform: translateY(-1px);
+}
+
+/* --- Bar pencarian & filter --- */
+.monitor-filter-card {
+    padding: 14px 18px;
+    margin-bottom: 16px;
+}
+
+.monitor-filter-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.monitor-search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f6f8fb;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 10px;
+    padding: 8px 14px;
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+/* Dua select filter (Diagnostik/Tryout) dibungkus satu wrapper flex
+   sendiri supaya keduanya SATU KESATUAN waktu .monitor-filter-bar (yang
+   flex-wrap:wrap) menentukan mana yang pindah baris duluan -- jadi yang
+   pecah baris duluan itu wrapper-nya (berdua sekaligus, pindah ke bawah
+   kolom pencarian), bukan salah satu select-nya sendirian. Baru kalau
+   lebar wrapper ini sendiri tidak cukup buat dua select berdampingan
+   (layar kecil, lihat media query di bawah), keduanya pecah jadi
+   satu-satu di dalam wrapper ini. */
+.monitor-filter-select-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.monitor-search-box i {
+    color: #8a8fa3;
+    font-size: 13px;
+}
+
+.monitor-search-box input {
+    border: none;
+    background: none;
+    outline: none;
+    font-size: 13.5px;
+    width: 100%;
+    color: var(--text-dark);
+}
+
+.monitor-filter-bar select {
+    border: 1.5px solid #e2e5ec;
+    border-radius: 10px;
+    padding: 8px 34px 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark);
+    background: #fff;
+    flex: 0 0 auto;
+    /* Ganti panah bawaan browser (yang jaraknya ke tepi kanan beda-beda
+       tiap browser, sering kelihatan terlalu mepet) dengan panah SVG
+       sendiri -- posisinya (background-position) & jaraknya dari tepi
+       jadi konsisten di semua browser. */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238a8fa3' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+}
+
+/* --- Pil status (dipakai kolom Diagnostik/Tryout & kuis sedang
+   dikerjakan) -- pola warnanya sama dengan .admin-materi-status di atas,
+   ditambah 2 varian baru (sedang/habis). --- */
+.monitor-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.monitor-status-pill.belum {
+    background: #eef1f6;
+    color: #b0b5c2;
+}
+
+.monitor-status-pill.sedang {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+}
+
+.monitor-status-pill.waktu_habis {
+    background: rgba(240, 148, 51, 0.14);
+    color: #d97706;
+}
+
+.monitor-status-pill.selesai {
+    background: rgba(12, 122, 110, 0.12);
+    color: var(--accent-color);
+}
+
+/* Khusus Final Tryout (multi-attempt): sudah pernah coba tapi skor
+   percobaan terakhir belum lulus, & sedang tidak ada percobaan aktif --
+   dibedakan dari "belum" (belum pernah mulai) & "waktu_habis" (percobaan
+   AKTIF yang waktunya habis), jadi warnanya SENGAJA beda dari keduanya
+   (oranye kemerahan, bukan oranye ".waktu_habis" atau abu-abu ".belum"). */
+.monitor-status-pill.belum_lulus {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+
+/* Label "Tes Diagnostik:"/"Final Tryout:" di depan pil status -- cuma
+   perlu tampil di kartu layar kecil (".admin-table thead{display:none}"
+   di @media max-width:575.98px di atas menyembunyikan judul kolom
+   "TES DIAGNOSTIK"/"FINAL TRYOUT" desktop), jadi di layar lebar label ini
+   disembunyikan lagi supaya tidak tampil dobel dengan judul kolomnya. */
+.monitor-status-mobile-label {
+    display: none;
+}
+
+.monitor-skor-text {
+    font-size: 12px;
+    color: #8a8fa3;
+    margin-top: 3px;
+}
+
+.monitor-materi-progress {
+    font-size: 12.5px;
+    color: var(--text-dark);
+}
+
+.monitor-materi-progress .lulus-count {
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+/* Header tabel yang bisa diklik buat urutkan (peringkat skor dsb) --
+   dipakai juga di ".monitor-bab-progress-table" (dialog "Semua Nilai
+   Peserta"), bukan cuma ".monitor-table" utama. */
+.monitor-table th.sortable,
+.monitor-bab-progress-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.monitor-table th.sortable:hover,
+.monitor-bab-progress-table th.sortable:hover {
+    color: var(--accent-color);
+}
+
+.monitor-table th.sortable i,
+.monitor-bab-progress-table th.sortable i {
+    font-size: 10px;
+    margin-left: 4px;
+    opacity: 0.5;
+}
+
+.monitor-table th.sortable.active i,
+.monitor-bab-progress-table th.sortable.active i {
+    opacity: 1;
+}
+
+.monitor-empty-row {
+    text-align: center;
+    color: #8a8fa3;
+    padding: 30px 0;
+}
+
+/* Tabel daftar skor (dialog kartu "Rata-rata Skor Diagnostik"/"Rata-rata
+   Skor Tryout") sengaja TIDAK ikut aturan umum ".admin-table" yang di
+   layar kecil berubah jadi kartu bertumpuk (Peringkat/Peserta/Skor jadi
+   masing-masing baris sendiri-sendiri -- kelihatan berantakan & susah
+   dibandingkan). Kolomnya cuma 3 & ringkas, jadi dipertahankan tetap
+   satu baris sejajar (peringkat | nama | skor) di semua ukuran layar,
+   headernya juga tetap tampil supaya urutannya (klik "Skor") tetap bisa
+   dipakai. Selektor dua kelas (".monitor-skor-table.admin-table") sengaja
+   dipakai supaya spesifisitasnya menang lawan aturan umum
+   ".admin-table"/".admin-table td" di atas tanpa perlu "!important"
+   di mana-mana.
+   "table-layout:fixed" + lebar tetap (px) untuk kolom Peringkat & Skor
+   dipasang di SEMUA ukuran layar (bukan cuma di dalam @media di bawah) --
+   supaya lebar kolomnya tidak dihitung ulang dari isi tiap baris (yang
+   bisa beda-beda tiap kali daftar dibuka/diurutkan, kesannya kolom
+   "geser") -- kolom Peserta yang mengambil sisa ruang lewat width:auto. */
+.monitor-skor-table {
+    table-layout: fixed;
+}
+
+.monitor-skor-table td.monitor-skor-rank-cell {
+    width: 64px;
+    text-align: center;
+    color: #8a8fa3;
+}
+
+.monitor-skor-table th.monitor-skor-rank-cell {
+    width: 64px;
+    text-align: center;
+}
+
+.monitor-skor-table td.monitor-skor-value-cell {
+    width: 70px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.monitor-skor-table th.monitor-skor-value-cell {
+    width: 70px;
+    text-align: center;
+}
+
+@media (max-width: 575.98px) {
+    .monitor-skor-table.admin-table thead {
+        display: table-header-group;
+    }
+
+    .monitor-skor-table.admin-table,
+    .monitor-skor-table.admin-table tbody {
+        display: table;
+        width: 100%;
+    }
+
+    .monitor-skor-table.admin-table tbody {
+        display: table-row-group;
+    }
+
+    .monitor-skor-table.admin-table tr {
+        display: table-row;
+    }
+
+    .monitor-skor-table.admin-table th {
+        padding: 8px 4px;
+        font-size: 10.5px;
+        white-space: nowrap;
+    }
+
+    .monitor-skor-table.admin-table td {
+        display: table-cell;
+        width: auto !important;
+        padding: 10px 4px;
+        border-top: 1px solid #eef1f6;
+    }
+
+    /* Lebar kolom Peringkat & Skor dipersempit lagi khusus layar HP
+       (supaya kolom Peserta di tengah dapat ruang lebih banyak untuk
+       nama+email) -- tetap px tetap (bukan auto) supaya tidak "geser"
+       antar baris/antar buka-tutup dialog. */
+    .monitor-skor-table.admin-table .monitor-skor-rank-cell {
+        width: 44px !important;
+    }
+
+    .monitor-skor-table.admin-table .monitor-skor-value-cell {
+        width: 52px !important;
+    }
+
+    /* "Skor X (Y/Z) · <tanggal>" -- di layar sempit tanggalnya jatuh ke
+       baris sendiri DI BAWAH "Skor X (Y/Z)" (bukan lagi sebaris), dan
+       pemisah "·"-nya disembunyikan (dua baris terpisah sudah cukup jelas
+       tanpa pemisah). Tombol "Lihat Rincian" di ".monitor-detail-section-row"
+       tetap otomatis rata tengah SEJAJAR blok dua baris ini (lihat
+       "align-items:center" di ".monitor-detail-section-row"), bukan lagi
+       nempel di baris paling bawah. */
+    .monitor-detail-scoreline {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .monitor-detail-scoreline-sep {
+        display: none;
+    }
+}
+
+/* --- Modal Detail Peserta (lebih lebar dari modal form biasa, karena
+   rincian jawaban per soal butuh ruang) --- */
+.admin-modal-lg {
+    max-width: 780px;
+}
+
+/* Lebih lebar lagi, KHUSUS dialog "Semua Nilai Peserta" di layar besar --
+   tabelnya bisa banyak kolom (Tes Diagnostik + tiap Bab + Final Tryout),
+   jadi kalau ruang cukup lebih enak ditampilkan lebar daripada digulir ke
+   samping terus. Class ini ditambah/dilepas lewat JS (lihat
+   monitorOpenAllScoresModal/closeMonitorReviewModal di js/admin.js) ke
+   #monitorReviewModalBackdrop yang sama dipakai dialog rincian
+   jawaban/riwayat lain -- supaya dialog LAIN yang isinya lebih ringkas
+   (skor list, dst) tidak ikut melebar. Di layar sempit tetap dibatasi
+   lebar viewport seperti modal lain (lihat ".admin-modal { width:100% }"
+   di atas), cuma berlaku waktu ruangnya memang ada. */
+.admin-modal-xl {
+    max-width: 1100px;
+}
+
+.monitor-detail-section {
+    margin-top: 18px;
+}
+
+.monitor-detail-section-title {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 15px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.monitor-detail-toggle-btn {
+    background: none;
+    border: 1.5px solid #e2e5ec;
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-color);
+    flex-shrink: 0;
+}
+
+/* Baris "Skor X ... · tanggal" + tombol "Lihat" (Tes Diagnostik/Final
+   Tryout) -- terpisah dari .monitor-detail-section-title supaya di layar
+   sempit, begitu keduanya tidak muat sebaris lagi, tombolnya jatuh ke baris
+   SENDIRI DI BAWAH teks skor (bukan nyempil di antara judul & teks skor
+   seperti sebelumnya). Tombolnya SENGAJA nempel langsung di sebelah teks
+   (bukan "justify-content:space-between") -- modal ini sekarang lebar
+   (".admin-modal-xl"), jadi kalau didorong rata kanan sampai ujung modal,
+   tombolnya kelihatan menjorok sendirian jauh dari teks skor yang terkait. */
+.monitor-detail-section-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+/* Teks "Skor X (Y/Z) · <tanggal>" -- dipecah 3 <span> (skor, pemisah "·",
+   tanggal) supaya di layar sempit tanggalnya bisa TURUN KE BARIS SENDIRI di
+   bawah "Skor X (Y/Z)" (bukan cuma mengandalkan word-wrap browser biasa) &
+   pemisah "·"-nya disembunyikan (gak relevan lagi kalau sudah beda baris) --
+   lihat override di media query layar sempit di bawah. Di layar lebar,
+   ketiganya tetap sebaris (flex-wrap:wrap tetap dipasang untuk jaga-jaga
+   ruang benar-benar sempit, mis. zoom besar). */
+.monitor-detail-scoreline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.monitor-detail-toggle-btn:hover {
+    background: #f6f8fb;
+}
+
+.monitor-soal-review-item {
+    border: 1px solid #eef1f6;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+}
+
+.monitor-soal-review-item.benar {
+    border-left: 3px solid var(--accent-color);
+}
+
+.monitor-soal-review-item.salah {
+    border-left: 3px solid #e0685a;
+}
+
+.monitor-soal-review-question {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 6px;
+}
+
+.monitor-soal-review-opsi {
+    font-size: 13px;
+    padding: 4px 0;
+    color: #8a8fa3;
+}
+
+.monitor-soal-review-opsi.pilihan-user {
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.monitor-soal-review-opsi.pilihan-user.salah {
+    color: #e0685a;
+}
+
+.monitor-soal-review-opsi.pilihan-benar {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.monitor-soal-review-penjelasan {
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: #8a8fa3;
+    background: #f6f8fb;
+    border-radius: 8px;
+    padding: 8px 10px;
+}
+
+/* Bungkus tabel dengan scroll horizontal SENDIRI, supaya di layar sempit
+   tabelnya tetap tampil PERSIS seperti di layar lebar (kolom tidak
+   menyempit/melipat jadi berantakan) -- peserta cukup geser ke samping
+   untuk lihat kolom yang belum kelihatan, bukan kolomnya yang dipaksa
+   muat/terpotong di luar modal seperti sebelumnya. */
+.monitor-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* min-width tabel daftar peserta (kolom Peserta/Progres Materi/Tes
+   Diagnostik/Final Tryout/Aksi) -- discope ke "min-width:576px" (bukan
+   berlaku selalu) supaya TIDAK ikut memaksa lebar minimum di layar HP
+   (<=575.98px), yang tabelnya sudah berubah jadi kartu bertumpuk lewat
+   aturan ".admin-table" di bawah (lihat @media max-width:575.98px) --
+   kalau min-width ini dibiarkan berlaku terus, kartu mobile itu jadi
+   ikut kepaksa lebar & muncul scroll ke samping yang tidak perlu. */
+@media (min-width: 576px) {
+    .monitor-table {
+        min-width: 720px;
+    }
+
+    /* Layar lebar (tabel biasa, bukan kartu mobile): klik baris mana aja
+       langsung buka detail peserta (lihat onclick di <tr>, renderMonitorTable()
+       di admin.js), jadi tombol mata "Lihat detail" yang terpisah gak perlu
+       ditampilkan lagi di sini -- tapi tetap ada di layar kecil (lihat
+       aturan sebaliknya di bawah, @media max-width:575.98px) karena di
+       tampilan kartu mobile bagian yang bisa diklik gak seobvious itu. */
+    .monitor-row-detail-btn {
+        display: none;
+    }
+}
+
+@media (min-width: 576px) {
+    .monitor-row-clickable {
+        cursor: pointer;
+    }
+}
+
+/* Kolom "Aksi" tabel Umpan Balik -- tampil di SEMUA ukuran layar (isinya
+   tombol unduh .xlsx yang memang perlu selalu terlihat, sama seperti
+   kolom "Aksi" tabel Monitor Peserta). Tombol mata "lihat detail" di
+   sebelahnya cuma tombol TAMBAHAN untuk layar SEMPIT (lihat class
+   ".monitor-row-detail-btn" yang disembunyikan otomatis di layar lebar,
+   ">=576px", lewat aturan yang sudah ada di dekat definisi
+   ".monitor-table" di atas) -- di layar lebar klik baris sudah cukup
+   (lihat ubRowClick() di js/admin.js), tapi di layar sempit klik baris
+   sengaja tidak berbuat apa-apa, jadi tombol matanya wajib ada. */
+.ub-aksi-header {
+    text-align: right;
+}
+
+.monitor-bab-progress-table {
+    width: 100%;
+    min-width: 640px;
+    border-collapse: collapse;
+}
+
+.monitor-bab-progress-table th,
+.monitor-bab-progress-table td {
+    text-align: left;
+    padding: 8px 6px;
+    font-size: 13px;
+    border-bottom: 1px solid #eef1f6;
+    white-space: nowrap;
+}
+
+.monitor-bab-progress-table th {
+    color: #8a8fa3;
+    font-weight: 700;
+    font-size: 11.5px;
+    text-transform: uppercase;
+}
+
+.monitor-bab-progress-table .col-center {
+    text-align: center;
+}
+
+/* Kolom Bab (judul bab) tetap BOLEH melipat ke baris baru (judulnya bisa
+   panjang) -- beda dengan kolom lain yang sengaja dipaksa satu baris
+   (nowrap) di atas supaya lebar kolomnya tidak ikut menyempit/berantakan
+   waktu tabel discroll. */
+.monitor-bab-progress-table .col-bab {
+    white-space: normal;
+    min-width: 220px;
+}
+
+/* Kolom "No" dipisah dari kolom "Bab" (dulu digabung jadi satu, mis.
+   "1. Fondasi Berpikir Kritis") -- dibuat sempit & rata tengah karena
+   isinya cuma angka. */
+.monitor-bab-progress-table .col-no {
+    width: 40px;
+}
+
+.monitor-cell-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.monitor-cell-stack .monitor-detail-toggle-btn {
+    margin-left: 0;
+}
+
+/* Strip ringkasan cepat di paling atas dialog "Lihat" (rincian jawaban) --
+   satu badge bernomor per soal, supaya admin bisa langsung lihat pola
+   benar/salah tanpa scroll baca kartu satu-satu, lihat
+   monitorRenderPembahasanHtml di admin.js. */
+.monitor-review-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #eef1f6;
+}
+
+.monitor-review-summary-badge {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid #e2e5ec;
+    background: #f6f8fb;
+    color: #8a8fa3;
+    font-size: 12.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.monitor-review-summary-badge:hover {
+    filter: brightness(0.97);
+}
+
+.monitor-review-summary-badge.benar {
+    background: rgba(12, 122, 110, 0.12);
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.monitor-review-summary-badge.salah {
+    background: rgba(214, 69, 80, 0.12);
+    color: #d64550;
+    border-color: #d64550;
+}
+
+@media (max-width: 575.98px) {
+    .monitor-filter-select-group {
+        flex: 1 1 100%;
+    }
+
+    .monitor-filter-bar select {
+        flex: 1 1 100%;
+    }
+
+    .monitor-stat-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* =================================================================
+   MODAL DETAIL UMPAN BALIK (#ubDetailModalBackdrop) -- baris label/nilai
+   tiap pertanyaan, dipakai bersama .monitor-detail-section/-title yang
+   sudah ada (lihat renderUbDetail() di js/admin.js).
+================================================================= */
+.ub-admin-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    padding: 9px 0;
+    border-bottom: 1px solid #f0f2f6;
+    font-size: 13.5px;
+}
+
+.ub-admin-row:last-child {
+    border-bottom: none;
+}
+
+.ub-admin-row-label {
+    flex: 0 0 240px;
+    color: #6b7080;
+    font-weight: 600;
+}
+
+.ub-admin-row-value {
+    flex: 1 1 260px;
+    color: var(--text-dark);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ub-admin-skala-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(12, 122, 110, 0.1);
+    color: var(--accent-color);
+    font-weight: 700;
+    font-size: 12.5px;
+}
+
+.ub-admin-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: #f3f5f9;
+    color: var(--text-dark);
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+@media (max-width: 576px) {
+    .ub-admin-row-label {
+        flex: 1 1 100%;
+    }
+}

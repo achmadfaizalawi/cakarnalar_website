@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sertifikat - Cakar Nalar</title>
+
+    <link rel="icon" type="image/png" href="assets/logo/logo-icon-transparent.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Buat tombol "Unduh Sertifikat (PDF)" -- generate file PDF LANGSUNG
+         di browser (screenshot tiap halaman lewat html2canvas, digabung
+         jadi satu PDF lewat jsPDF), tanpa lewat dialog cetak bawaan
+         browser (window.print()) sama sekali. Lihat unduhSertifikatPDF()
+         di js/sertifikat.js.
+
+         SEBELUMNYA dicoba pakai library "html2pdf.js" (bungkusan siap
+         pakai dari html2canvas+jsPDF, otomatis memotong 1 canvas
+         raksasa jadi banyak halaman) -- TERNYATA di sebagian
+         browser/HP (kemungkinan besar ada batas ukuran maksimum
+         kanvas per browser, terutama di Safari/iOS) canvas raksasa
+         setinggi 3 halaman sekaligus itu gagal digambar dengan benar,
+         hasilnya sebagian halaman PDF jadi HITAM POLOS. Makanya di
+         sini dipakai html2canvas & jsPDF TERPISAH (bukan lewat
+         html2pdf.js) supaya tiap HALAMAN discreenshot SATU-SATU
+         (kanvasnya jadi jauh lebih kecil, cuma seukuran 1 halaman),
+         baru masing-masing ditempel jadi 1 halaman PDF sendiri-sendiri
+         lewat jsPDF -- jauh lebih aman lintas perangkat. -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/quiz.css">
+    <!-- Tombol "Unduh Sertifikat (PDF)" di bawah sudah pakai class
+         "btn-bab-action" (biar seragam tampilannya dengan tombol aksi
+         lain di seluruh situs, mis. "Lanjutkan Belajar" di Dashboard),
+         TAPI class itu sebenarnya DIDEFINISIKAN di css/dashboard.css --
+         sertifikat.html SEBELUMNYA tidak memuat file itu sama sekali,
+         jadi tombolnya selama ini tampil polos (gaya bawaan browser),
+         bukan gaya button situs yang sebenarnya. SAMA seperti
+         laporan.html (juga pakai .btn-bab-action buat tombol "Lihat
+         Laporan Lengkap"-nya, juga memuat css/dashboard.css duluan). -->
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/sertifikat.css">
+</head>
+
+<body class="quiz-body sertifikat-body">
+
+    <nav class="quiz-topbar no-print">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="dashboard.html" class="quiz-back-link">
+                <i class="fa-solid fa-arrow-left"></i> <span class="quiz-back-text">Kembali ke Dashboard</span>
+            </a>
+            <img src="assets/logo/logo-cakar-nalar-horizontal.png" class="logo-img" alt="Cakar Nalar">
+        </div>
+    </nav>
+
+    <main class="sertifikat-main">
+        <div id="sertifikat-status" class="quiz-loading">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            Memuat sertifikat...
+        </div>
+
+        <div id="sertifikat-wrap" style="display:none;">
+            <div class="no-print sertifikat-toolbar">
+                <button class="btn-bab-action" id="sertifikat-unduh-btn" onclick="unduhSertifikatPDF()">
+                    <i class="fa-solid fa-download"></i> Unduh Sertifikat (PDF)
+                </button>
+                <p class="sertifikat-toolbar-hint">Klik tombol di atas, file PDF-nya langsung tersimpan ke
+                    perangkatmu.</p>
+            </div>
+
+            <div class="sertifikat-page">
+                <div class="sertifikat-border">
+                    <div class="sertifikat-decor" aria-hidden="true">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <img src="assets/logo/logo-cakar-nalar-horizontal.png" class="sertifikat-logo" alt="Cakar Nalar">
+                    <div class="sertifikat-kop">Sertifikat Penyelesaian Program</div>
+                    <div class="sertifikat-subkop">Program Pengabdian Masyarakat &mdash; Cakar Nalar</div>
+
+                    <div class="sertifikat-diberikan">Dengan bangga diberikan kepada</div>
+                    <div class="sertifikat-nama" id="sertifikat-nama">Nama Peserta</div>
+
+                    <p class="sertifikat-body-text">
+                        atas keberhasilannya menyelesaikan seluruh rangkaian Program Cakar Nalar sebagai bentuk
+                        komitmen dalam mengembangkan kemampuan berpikir kritis dan literasi digital.
+                    </p>
+
+                    <div class="sertifikat-skor-box">
+                        <div>
+                            <div class="sertifikat-skor-label">Skor Final Tryout</div>
+                            <div class="sertifikat-skor-angka" id="sertifikat-skor">-</div>
+                        </div>
+                        <div class="sertifikat-skor-divider"></div>
+                        <div>
+                            <div class="sertifikat-skor-label">Klasifikasi</div>
+                            <div class="sertifikat-klasifikasi" id="sertifikat-klasifikasi">-</div>
+                        </div>
+                    </div>
+
+                    <div class="sertifikat-footer">
+                        <div class="sertifikat-footer-col">
+                            <div class="sertifikat-footer-label">Tanggal Selesai</div>
+                            <div class="sertifikat-footer-value" id="sertifikat-tanggal">-</div>
+                        </div>
+                        <div class="sertifikat-footer-col sertifikat-footer-signature">
+                            <div class="sertifikat-signature-line"></div>
+                            <div class="sertifikat-footer-value">Tim Penyelenggara Program Cakar Nalar</div>
+                        </div>
+                        <div class="sertifikat-footer-col text-md-end">
+                            <div class="sertifikat-footer-label">No. Sertifikat</div>
+                            <div class="sertifikat-footer-value" id="sertifikat-nomor">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Halaman ke-2: penjelasan rubrik klasifikasi -- supaya siapapun
+                 yang melihat sertifikat ini (bukan cuma peserta sendiri) tahu
+                 maksud label klasifikasi di halaman pertama itu apa. -->
+            <div class="sertifikat-page sertifikat-page-rubrik">
+                <div class="sertifikat-border sertifikat-border-rubrik">
+                    <div class="sertifikat-decor" aria-hidden="true">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div class="sertifikat-rubrik-header">
+                        <img src="assets/logo/logo-icon-transparent.png" class="sertifikat-rubrik-logo" alt="Cakar Nalar">
+                        <h4>Penjelasan Klasifikasi Skor Final Tryout</h4>
+                    </div>
+                    <p class="sertifikat-rubrik-intro">
+                        Skor total peserta dikelompokkan ke dalam tiga tahapan perkembangan nalar kritis
+                        berdasarkan rubrik <em>Paul &amp; Elder Critical Thinking Stages</em>:
+                    </p>
+                    <div class="sertifikat-rubrik-list" id="sertifikat-rubrik-list"></div>
+                </div>
+            </div>
+
+            <!-- Halaman ke-3: daftar materi yang dipelajari -- supaya siapapun
+                 yang melihat sertifikat ini tahu apa saja isi programnya, bukan
+                 cuma skor akhirnya. -->
+            <div class="sertifikat-page sertifikat-page-rubrik">
+                <div class="sertifikat-border sertifikat-border-rubrik">
+                    <div class="sertifikat-decor" aria-hidden="true">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div class="sertifikat-rubrik-header">
+                        <img src="assets/logo/logo-icon-transparent.png" class="sertifikat-rubrik-logo" alt="Cakar Nalar">
+                        <h4>Materi yang Dipelajari</h4>
+                    </div>
+                    <p class="sertifikat-rubrik-intro">
+                        Program Cakar Nalar terdiri dari <span id="sertifikat-materi-jumlah">6</span> modul
+                        pembelajaran berikut, dan peserta telah menyelesaikan &amp; lulus seluruhnya:
+                    </p>
+                    <div class="sertifikat-materi-list" id="sertifikat-materi-list"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/transition.js"></script>
+    <script src="js/sertifikat.js"></script>
+</body>
+
+</html>

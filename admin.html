@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Cakar Nalar</title>
+
+    <link rel="icon" type="image/png" href="assets/logo/logo-icon-transparent.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Dipakai HANYA untuk styling kartu "Penjelasan Jawaban" & "Riwayat
+         Percobaan" di modal Detail Monitor Peserta (kelas quiz-review-*/
+         quiz-riwayat-*) -- disamakan PERSIS dengan tampilan yang peserta
+         lihat sendiri di kuis.html/diagnostik.html/tryout.html, lihat
+         monitorRenderPembahasanHtml & monitorBuildRiwayatRowsHtml di
+         js/admin.js. Tidak ada elemen lain di panel admin yang memakai
+         css/quiz.css ini selain kedua fungsi tersebut. -->
+    <link rel="stylesheet" href="css/quiz.css">
+    <!-- "?v=" di css/admin.js & js/admin.js/transition.js di bawah: pemicu
+         cache-busting supaya browser peserta/admin yang sudah pernah buka
+         halaman ini sebelumnya otomatis ambil versi TERBARU file-file ini
+         begitu ada perubahan, bukan kepakai salinan lama dari cache
+         browser (baru kelihatan lagi setelah hard refresh/clear cache
+         manual, tanpa ini). NAIKKAN angka tanggalnya tiap kali admin.css/
+         admin.js/transition.js diubah & diunggah ulang ke hosting. -->
+    <link rel="stylesheet" href="css/admin.css?v=20260923">
+</head>
+
+<body class="admin-body">
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop" onclick="closeAdminSidebar()"></div>
+    <aside class="admin-sidebar" id="adminSidebar">
+        <div class="admin-sidebar-logo">
+            <a href="index.html">
+                <img src="assets/logo/logo-cakar-nalar-horizontal.png" alt="Cakar Nalar" class="admin-sidebar-logo-full">
+                <img src="assets/logo/logo-icon-transparent.png" alt="Cakar Nalar" class="admin-sidebar-logo-icon">
+            </a>
+            <button class="admin-sidebar-collapse-btn" id="adminSidebarCollapseBtn"
+                onclick="toggleAdminSidebarCollapse()" title="Perkecil sidebar">
+                <i class="fa-solid fa-angles-left"></i>
+            </button>
+        </div>
+        <nav class="admin-nav">
+            <button class="admin-nav-item active" data-page="monitor" onclick="switchAdminPage('monitor')" title="Monitor Peserta">
+                <i class="fa-solid fa-chart-simple"></i> <span class="admin-nav-label">Monitor Peserta</span>
+            </button>
+            <button class="admin-nav-item" data-page="soal" onclick="switchAdminPage('soal')" title="Kelola Soal">
+                <i class="fa-solid fa-list-check"></i> <span class="admin-nav-label">Kelola Soal</span>
+            </button>
+            <button class="admin-nav-item" data-page="materi" onclick="switchAdminPage('materi')" title="Kelola Materi">
+                <i class="fa-solid fa-book-open"></i> <span class="admin-nav-label">Kelola Materi</span>
+            </button>
+            <button class="admin-nav-item" data-page="user" onclick="switchAdminPage('user')" title="Manajemen User">
+                <i class="fa-solid fa-users-gear"></i> <span class="admin-nav-label">Manajemen User</span>
+            </button>
+            <button class="admin-nav-item" data-page="umpan-balik" onclick="switchAdminPage('umpan-balik')" title="Umpan Balik">
+                <i class="fa-solid fa-comment-dots"></i> <span class="admin-nav-label">Umpan Balik</span>
+            </button>
+        </nav>
+        <div class="admin-sidebar-footer">
+            <div class="admin-user-chip">
+                <div class="admin-avatar" id="adminAvatar">A</div>
+                <div class="admin-user-chip-text">
+                    <div class="admin-user-name" id="adminName">Admin</div>
+                    <div class="admin-user-role">Administrator</div>
+                </div>
+            </div>
+            <button class="admin-logout-btn" onclick="adminLogout()" title="Keluar">
+                <i class="fa-solid fa-right-from-bracket"></i> <span class="admin-logout-label">Keluar</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Terapkan preferensi "sidebar diperkecil" SESEGERA MUNGKIN -- taruh
+         di sini (langsung setelah markup sidebar-nya, bukan menunggu
+         admin.js yang baru dimuat di akhir <body>) supaya class-nya
+         sudah terpasang SEBELUM browser sempat menggambar (paint) sidebar
+         ini sama sekali. Kalau menunggu admin.js, sidebar sempat digambar
+         dulu dalam keadaan terbuka penuh (state HTML aslinya), baru
+         sesaat kemudian "dipaksa" mengecil begitu admin.js selesai
+         dimuat -- kelihatan sebagai kedipan (maximize sekilas lalu
+         minimize lagi) tiap kali halaman admin dibuka/dimuat ulang waktu
+         sidebarnya memang lagi diperkecil. Logika di sini SENGAJA dibuat
+         ringkas/duplikat kecil dari terapkanSidebarDiperkecil() di
+         admin.js (bukan memanggil fungsi itu) -- supaya tidak perlu
+         menunggu admin.js dimuat sama sekali. -->
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('cn_admin_sidebar_collapsed') === '1') {
+                    document.getElementById('adminSidebar').classList.add('collapsed');
+                    document.body.classList.add('admin-sidebar-collapsed');
+                }
+            } catch (e) {
+                // localStorage tidak tersedia -- biarkan sidebar terbuka penuh (default).
+            }
+        })();
+    </script>
+
+    <!-- ===================== KONTEN ===================== -->
+    <main class="admin-main">
+        <div class="admin-mobile-topbar">
+            <a href="index.html"><img src="assets/logo/logo-cakar-nalar-horizontal.png" alt="Cakar Nalar"></a>
+            <button class="admin-mobile-toggle" onclick="openAdminSidebar()">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+
+        <!-- ===== HALAMAN: KELOLA SOAL ===== -->
+        <section id="page-soal" class="admin-page-section" style="display:none;">
+            <div class="admin-page-header">
+                <div>
+                    <h2>Kelola Soal</h2>
+                    <p>Tambah, ubah, atau hapus soal untuk Tes Diagnostik dan Final Tryout.</p>
+                </div>
+                <button class="admin-btn-primary" onclick="openSoalModal()">
+                    <i class="fa-solid fa-plus"></i>Tambah
+                </button>
+            </div>
+
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" data-jenis="diagnostik" onclick="switchJenisSoal('diagnostik')">Tes Diagnostik</button>
+                <button class="admin-tab-btn" data-jenis="tryout" onclick="switchJenisSoal('tryout')">Final Tryout</button>
+            </div>
+
+            <div class="admin-collapse-card collapsed" id="timer-collapse-card">
+                <button type="button" class="admin-collapse-title" onclick="toggleAdminCollapse('timer-collapse-card')">
+                    <span class="admin-collapse-title-main">
+                        <i class="fa-solid fa-clock admin-collapse-title-icon"></i>
+                        <span class="admin-collapse-title-lines">
+                            <span class="admin-collapse-title-text">Batas Waktu Pengerjaan</span>
+                            <span class="admin-timer-hint" id="timer-hint"></span>
+                        </span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down admin-collapse-toggle-icon"></i>
+                </button>
+                <div class="admin-collapse-body">
+                    <div class="admin-timer-bar" id="timer-bar">
+                        <label class="admin-switch">
+                            <input type="checkbox" id="f-timer-pakai-waktu" onchange="toggleTimerDurasi()">
+                            <span class="admin-switch-slider"></span>
+                        </label>
+                        <span>Aktifkan batas waktu</span>
+                        <div class="admin-timer-durasi-action">
+                            <div class="admin-timer-durasi-group admin-timer-durasi-nonaktif" id="timerDurasiGroup">
+                                <input type="number" id="timer-durasi-input" min="1" disabled>
+                                <span>menit</span>
+                            </div>
+                            <button class="admin-btn-primary admin-timer-save-btn" onclick="simpanDurasiTes()">Simpan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-collapse-card collapsed" id="petunjuk-tes-collapse-card">
+                <button type="button" class="admin-collapse-title" onclick="toggleAdminCollapse('petunjuk-tes-collapse-card')">
+                    <span class="admin-collapse-title-main">
+                        <i class="fa-solid fa-circle-info admin-collapse-title-icon"></i>
+                        <span class="admin-collapse-title-lines">
+                            <span class="admin-collapse-title-text">Petunjuk Pengerjaan</span>
+                        </span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down admin-collapse-toggle-icon"></i>
+                </button>
+                <div class="admin-collapse-body">
+                    <div class="admin-form-group" style="margin-bottom:10px;">
+                        <label>Petunjuk Pengerjaan (opsional)</label>
+                        <textarea id="f-petunjuk-tes" rows="2" placeholder="Petunjuk cara mengerjakan soal ini untuk peserta"></textarea>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button class="admin-btn-primary" onclick="simpanPetunjukTes()">Simpan</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div id="soal-list-container">
+                    <div class="admin-loading">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        Memuat soal...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== HALAMAN: KELOLA MATERI BAB ===== -->
+        <section id="page-materi" class="admin-page-section" style="display:none;">
+            <div class="admin-page-header">
+                <div>
+                    <h2>Kelola Materi</h2>
+                    <p>Tambah, ubah, atau hapus materi.</p>
+                </div>
+                <button class="admin-btn-primary" onclick="openBabModal()">
+                    <i class="fa-solid fa-plus"></i>Tambah
+                </button>
+            </div>
+
+            <div class="admin-card">
+                <div id="bab-list-container">
+                    <div class="admin-loading">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        Memuat bab...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== HALAMAN: MONITOR PESERTA ===== -->
+        <section id="page-monitor" class="admin-page-section">
+            <div class="admin-page-header">
+                <div>
+                    <h2>Monitor Peserta</h2>
+                    <p>Pantau progres, skor, dan status pengerjaan semua peserta.</p>
+                </div>
+                <div class="admin-page-header-actions">
+                    <button class="admin-btn-secondary" onclick="loadMonitorPeserta()" title="Muat ulang data terbaru">
+                        <i class="fa-solid fa-rotate"></i> Refresh
+                    </button>
+                    <!-- Dropdown pilihan format export laporan KESELURUHAN peserta
+                         (semua peserta x semua nilai -- Tes Diagnostik, tiap
+                         Bab, Final Tryout -- sama seperti isi dialog "Semua
+                         Nilai Peserta") -- CSV & XLSX isinya SAMA PERSIS
+                         (matriks semua peserta, SELALU semua peserta, TIDAK
+                         ikut filter/pencarian yang aktif), cuma beda format
+                         file (lihat exportMonitorPesertaCsv/exportMonitorPesertaXlsx
+                         di admin.js). Laporan per peserta ada di tombol
+                         terpisah pada kolom "Aksi" tiap baris tabel (lihat
+                         renderMonitorTable() di admin.js). -->
+                    <div class="dropdown d-inline-block">
+                        <button class="admin-btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Unduh laporan seluruh peserta">
+                            <i class="fa-solid fa-file-arrow-down"></i> Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="exportMonitorPesertaCsv(); return false;"><i class="fa-solid fa-file-csv"></i> Export CSV</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportMonitorPesertaXlsx(); return false;"><i class="fa-solid fa-file-excel"></i> Export XLSX</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="monitor-stat-row" id="monitor-stat-row"></div>
+
+            <div class="admin-card monitor-filter-card">
+                <div class="monitor-filter-bar">
+                    <div class="monitor-search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="monitor-search-input" placeholder="Cari nama atau email peserta..." oninput="renderMonitorTable()">
+                    </div>
+                    <!-- Dibungkus satu wrapper (monitor-filter-select-group) supaya
+                         kedua select ini SELALU tetap satu baris berdua kalau
+                         muat, dan baru pecah jadi dua baris (satu select per
+                         baris) kalau layarnya benar-benar sempit -- bukan
+                         ngikut lebar kolom pencarian di sebelahnya (yang
+                         boleh pecah baris duluan/sendiri). -->
+                    <div class="monitor-filter-select-group">
+                        <select id="monitor-filter-diagnostik" onchange="renderMonitorTable()">
+                            <option value="">Semua Status Diagnostik</option>
+                            <option value="belum">Diagnostik: Belum Mulai</option>
+                            <option value="sedang">Diagnostik: Sedang Mengerjakan</option>
+                            <option value="waktu_habis">Diagnostik: Waktu Habis</option>
+                            <option value="selesai">Diagnostik: Selesai</option>
+                        </select>
+                        <select id="monitor-filter-tryout" onchange="renderMonitorTable()">
+                            <option value="">Semua Status Tryout</option>
+                            <option value="belum">Tryout: Belum Mulai</option>
+                            <option value="sedang">Tryout: Sedang Mengerjakan</option>
+                            <option value="waktu_habis">Tryout: Waktu Habis</option>
+                            <option value="belum_lulus">Tryout: Belum Lulus</option>
+                            <option value="selesai">Tryout: Selesai</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div id="monitor-list-container">
+                    <div class="admin-loading">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        Memuat data peserta...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== HALAMAN: MANAJEMEN USER =====
+             Sengaja PAKAI ULANG monitorPesertaCache (sudah dimuat lewat
+             loadMonitorPeserta() -- lihat auth guard IIFE & switchAdminPage
+             di admin.js), bukan fetch data terpisah -- daftar nama/email
+             peserta yang dibutuhkan di sini kebetulan SAMA dengan yang
+             sudah dimuat buat Monitor Peserta, jadi tidak perlu endpoint
+             baru cuma buat menampilkan daftar ini. -->
+        <section id="page-user" class="admin-page-section" style="display:none;">
+            <div class="admin-page-header">
+                <div>
+                    <h2>Manajemen User</h2>
+                    <p>Ubah nama, email, kata sandi, atau hapus akun.</p>
+                </div>
+                <div class="admin-page-header-actions">
+                    <button class="admin-btn-secondary" onclick="loadMonitorPeserta()" title="Muat ulang data terbaru">
+                        <i class="fa-solid fa-rotate"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="admin-card monitor-filter-card">
+                <div class="monitor-filter-bar">
+                    <div class="monitor-search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="user-search-input" placeholder="Cari nama atau email peserta..." oninput="renderUserManagementTable()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div id="user-list-container">
+                    <div class="admin-loading">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        Memuat data peserta...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== HALAMAN: UMPAN BALIK ===== -->
+        <section id="page-umpan-balik" class="admin-page-section" style="display:none;">
+            <div class="admin-page-header">
+                <div>
+                    <h2>Umpan Balik</h2>
+                    <p>Respons Form Umpan Balik &amp; Evaluasi Dampak Program yang wajib diisi peserta sebelum mengunduh sertifikat.</p>
+                </div>
+                <div class="admin-page-header-actions">
+                    <button class="admin-btn-secondary" onclick="loadUmpanBalikList()" title="Muat ulang data terbaru">
+                        <i class="fa-solid fa-rotate"></i> Refresh
+                    </button>
+                    <!-- Dropdown pilihan format unduh "Respon Form" SEMUA peserta
+                         sekaligus (1 baris per peserta, semua pertanyaan jadi
+                         kolom) -- BEDA dengan tombol unduh xlsx di kolom "Aksi"
+                         tiap baris tabel (itu cuma 1 peserta, lihat
+                         exportUmpanBalikXlsx() di admin.js). CSV & XLSX isinya
+                         SAMA PERSIS, cuma beda format file (lihat
+                         exportUmpanBalikCsv/exportUmpanBalikKeseluruhanXlsx di
+                         admin.js) -- pola SAMA dengan dropdown "Export" di
+                         Monitor Peserta di atas. -->
+                    <div class="dropdown d-inline-block">
+                        <button class="admin-btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Unduh respon Form Umpan Balik semua peserta">
+                            <i class="fa-solid fa-file-arrow-down"></i> Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="exportUmpanBalikCsv(); return false;"><i class="fa-solid fa-file-csv"></i> Unduh CSV</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportUmpanBalikKeseluruhanXlsx(); return false;"><i class="fa-solid fa-file-excel"></i> Unduh XLSX</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-card monitor-filter-card">
+                <div class="monitor-filter-bar">
+                    <div class="monitor-search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="ub-search-input" placeholder="Cari nama atau email peserta..." oninput="renderUmpanBalikTable()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div id="ub-list-container">
+                    <div class="admin-loading">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        Memuat data umpan balik...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== FOOTER ===================== -->
+        <footer class="site-footer admin-footer site-footer-minimal">
+            <div class="footer-bottom">
+                Cakar Nalar © <span id="footer-year"></span>. Seluruh hak cipta dilindungi.
+            </div>
+        </footer>
+    </main>
+
+    <!-- ===================== MODAL FORM SOAL ===================== -->
+    <div class="admin-modal-backdrop" id="soalModalBackdrop">
+        <div class="admin-modal">
+            <div class="admin-modal-header">
+                <div class="admin-modal-header-titlewrap">
+                    <h4 id="soalModalTitle">Tambah Soal</h4>
+                    <p class="admin-modal-header-desc" id="soalModalJenisHint"></p>
+                </div>
+                <button class="admin-modal-close" onclick="closeSoalModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="soalForm" onsubmit="submitSoalForm(event)">
+                <input type="hidden" id="f-soal-id">
+                <input type="hidden" id="f-soal-jenis">
+                <input type="hidden" id="f-soal-babid">
+
+                <div class="admin-form-group">
+                    <label>Pertanyaan</label>
+                    <textarea id="f-pertanyaan" rows="3" required></textarea>
+                </div>
+
+                <div class="admin-form-group" id="soalPilihanDinamisGroup">
+                    <label>Pilihan Jawaban</label>
+                    <div id="soalPilihanDinamisList"></div>
+                    <button type="button" class="admin-btn-secondary" style="margin-top:8px;" onclick="tambahOpsiDinamis()">
+                        <i class="fa-solid fa-plus"></i> Tambah Opsi
+                    </button>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Penjelasan Jawaban (opsional)</label>
+                    <textarea id="f-penjelasan" rows="2"></textarea>
+                </div>
+
+                <input type="hidden" id="f-urutan">
+                <div class="admin-form-group">
+                    <label>Poin (opsional)</label>
+                    <input type="number" id="f-poin" step="0.01" min="0" placeholder="cth. 3.33">
+                </div>
+                <p class="admin-form-hint">Kosongkan untuk bobot rata otomatis.</p>
+
+                <div class="admin-modal-footer">
+                    <button type="button" class="admin-btn-secondary" onclick="closeSoalModal()">Batal</button>
+                    <button type="submit" class="admin-btn-primary" id="soalFormSubmitBtn">Simpan Soal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================== MODAL FORM BAB ===================== -->
+    <div class="admin-modal-backdrop" id="babModalBackdrop">
+        <div class="admin-modal">
+            <div class="admin-modal-header">
+                <h4 id="babModalTitle">Tambah Materi</h4>
+                <button class="admin-modal-close" onclick="closeBabModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="babForm" onsubmit="submitBabForm(event)">
+                <!-- Semua field form (kecuali tombol Batal & X di header, dan
+                     progress bar/persentase upload video) dibungkus beberapa
+                     <fieldset class="admin-fieldset-reset"> supaya bisa
+                     dikunci bareng (fieldset.disabled = true) selama proses
+                     Simpan masih berjalan (termasuk saat masih mengunggah
+                     video/file materi di belakang layar) -- lihat
+                     setBabFormLocked() & submitBabForm() di js/admin.js.
+                     Ini mencegah admin gak sengaja (atau ada yang iseng)
+                     ubah-ubah isian lain selagi prosesnya jalan.
+
+                     SENGAJA dipecah jadi BEBERAPA <fieldset> terpisah
+                     (bukan satu <fieldset> besar membungkus semuanya),
+                     supaya area progress bar & persentase upload video
+                     (#babUploadProgressLabel/#babUploadProgressWrap di
+                     bawah) bisa duduk DI LUAR fieldset manapun -- CSS
+                     "opacity" yang dipakai buat efek buram pas dikunci
+                     (lihat .admin-fieldset-reset:disabled di admin.css)
+                     otomatis berlaku ke SEMUA anak-turunan elemen yang
+                     opacity-nya diturunkan, dan TIDAK BISA "dibatalkan"
+                     lagi oleh elemen anak manapun -- jadi satu-satunya
+                     cara progress bar & persentasenya tetap kelihatan
+                     jelas/tidak ikut buram adalah membuatnya BUKAN anak
+                     dari fieldset yang diburamkan itu sama sekali.
+
+                     PENTING soal cara motong-motongnya: setiap <fieldset>
+                     di bawah ini SENGAJA dibikin mandiri/utuh (dibuka LALU
+                     ditutup lagi tanpa ada elemen lain yang "menumpang
+                     lewat" di antaranya) -- tidak ada satupun yang dibuka
+                     lalu ditutup belakangan setelah elemen pembungkus
+                     (<div>) yang dibuka sesudahnya sempat ditutup duluan.
+                     Itu HTML TIDAK VALID: kalau ada <div> yang masih
+                     terbuka "menumpuk" di atas sebuah <fieldset> pas tag
+                     penutup </fieldset>-nya muncul, browser akan DIAM-DIAM
+                     MENGABAIKAN tag penutup itu (bukan malah memaksa
+                     nutup <div>-nya) -- bikin fieldset-nya tetap kebuka
+                     terus tanpa disadari & struktur elemen sesudahnya
+                     jadi berantakan total (sudah pernah kejadian & sempat
+                     ketauan lewat screenshot pas dicoba). Makanya, semua
+                     fieldset yang mengunci sebagian isi grup "Video
+                     (opsional)" di bawah ini dibuat sebagai fieldset KECIL
+                     yang berdiri sendiri PERSIS di dalam satu <div>
+                     tertentu, bukan fieldset besar yang coba menumpang ke
+                     banyak level <div> sekaligus. -->
+                <fieldset class="admin-fieldset-reset admin-babform-lockable">
+                <input type="hidden" id="f-bab-form-id">
+                <input type="hidden" id="f-bab-nomor" min="1">
+
+                <div class="admin-form-group">
+                    <label>Judul Bab</label>
+                    <input type="text" id="f-bab-judul" maxlength="300" required>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Ringkasan Singkat</label>
+                    <input type="text" id="f-bab-ringkasan" maxlength="500" required
+                        placeholder="Ditampilkan di kartu bab pada dashboard peserta">
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Teks Materi (opsional)</label>
+                    <textarea id="f-bab-konten" rows="5" placeholder="Isi bacaan materi untuk bab ini"></textarea>
+                </div>
+                </fieldset>
+
+                <div class="admin-form-group">
+                    <label>Video (opsional)</label>
+                    <fieldset class="admin-fieldset-reset admin-babform-lockable">
+                    <div class="admin-toggle-group">
+                        <label class="admin-toggle-option">
+                            <input type="radio" name="f-bab-video-mode" value="link" checked onchange="ubahModeVideoBab()">
+                            Link YouTube
+                        </label>
+                        <label class="admin-toggle-option">
+                            <input type="radio" name="f-bab-video-mode" value="upload" onchange="ubahModeVideoBab()">
+                            Upload File Video
+                        </label>
+                    </div>
+
+                    <div id="babVideoLinkMode">
+                        <input type="url" id="f-bab-video" placeholder="https://...">
+                    </div>
+                    </fieldset>
+
+                    <div id="babVideoUploadMode" style="display:none;">
+                        <div id="babVideoSection" style="display:none;">
+                            <fieldset class="admin-fieldset-reset admin-babform-lockable">
+                            <div id="babVideoCurrent" class="admin-ppt-current"></div>
+                            <input type="file" id="f-bab-video-file" class="admin-file-input-notext" accept=".mp4,.webm,.mov" onchange="pilihFileVideoBab()">
+                            <p class="admin-form-hint" style="margin-top:8px;">Maks 100MB. Format: MP4, WebM, atau MOV.</p>
+                            </fieldset>
+                            <!-- Progress bar + persentase upload video -- SENGAJA
+                                 di luar fieldset manapun (lihat catatan panjang
+                                 di atas form), tapi posisinya di markup tetap
+                                 dipertahankan persis di bawah kotak pilih file
+                                 video seperti sebelumnya, jadi tampilannya di
+                                 layar tidak berubah. -->
+                            <div class="admin-upload-progress-label" id="babUploadProgressLabel" style="display:none;">Mengunggah video... <span id="babUploadProgressPercent">0%</span></div>
+                            <div class="admin-upload-progress-wrap" id="babUploadProgressWrap" style="display:none;">
+                                <div class="admin-upload-progress-bar" id="babUploadProgressBar"></div>
+                            </div>
+                        </div>
+                        <p class="admin-form-hint" id="babVideoHintBaru">Simpan bab ini dulu, baru file videonya bisa diunggah (buka lagi lewat "Ubah").</p>
+                    </div>
+                </div>
+
+                <div class="admin-form-group" id="babPptSection" style="display:none;">
+                    <label>File Materi (PPT/PPTX/PDF, opsional)</label>
+                    <fieldset class="admin-fieldset-reset admin-babform-lockable">
+                    <div id="babPptList" class="admin-file-materi-list"></div>
+                    <input type="file" id="f-bab-ppt-file" class="admin-file-input-notext" accept=".ppt,.pptx,.pdf" multiple onchange="pilihFileMateriBab()">
+                    <p class="admin-form-hint" style="margin-top:8px;">Bisa unggah lebih dari satu file. Maks 20MB per file.</p>
+                    </fieldset>
+                    <!-- Progress bar + persentase upload file materi -- pola &
+                         alasannya SAMA PERSIS seperti punya video (lihat
+                         catatan panjang di atas <form id="babForm">): sengaja
+                         di luar fieldset manapun supaya tidak ikut buram pas
+                         field lain di sekitarnya terkunci selagi proses
+                         simpan/unggah berjalan. Karena file materi bisa lebih
+                         dari satu (diunggah SATU PER SATU, lihat
+                         unggahFileMateriBabPending() di js/admin.js), teks
+                         labelnya beda dikit dari punya video -- ada penanda
+                         "(ke-2/3)" dst kalau lagi unggah lebih dari satu file,
+                         diupdate tiap kali pindah ke file berikutnya. -->
+                    <div class="admin-upload-progress-label" id="babPptUploadProgressLabel" style="display:none;"><span id="babPptUploadProgressPrefix">Mengunggah file materi...</span> <span id="babPptUploadProgressPercent">0%</span></div>
+                    <div class="admin-upload-progress-wrap" id="babPptUploadProgressWrap" style="display:none;">
+                        <div class="admin-upload-progress-bar" id="babPptUploadProgressBar"></div>
+                    </div>
+                </div>
+                <p class="admin-form-hint" id="babPptHintBaru">Simpan bab ini dulu, baru file PPT/PPTX/PDF-nya bisa diunggah (buka lagi lewat "Ubah").</p>
+
+                <fieldset class="admin-fieldset-reset admin-babform-lockable">
+                <div class="admin-form-group admin-form-check">
+                    <label class="admin-switch">
+                        <input type="checkbox" id="f-bab-ada-kuis" checked onchange="toggleBabKuisSection()">
+                        <span class="admin-switch-slider"></span>
+                    </label>
+                    <div>
+                        <label for="f-bab-ada-kuis" style="margin-bottom:2px;">Ada Kuis untuk Bab Ini</label>
+                        <p class="admin-form-hint" style="margin:0;">Syarat wajib lulus sebelum lanjut.</p>
+                    </div>
+                </div>
+
+                <div class="admin-form-group" id="babNilaiMinimalGroup">
+                    <label>Nilai Minimal (opsional)</label>
+                    <input type="number" id="f-bab-nilai-minimal" min="0" max="100" placeholder="Kosongkan = tanpa syarat skor">
+                </div>
+
+                <div class="admin-form-group" id="babKuisSection">
+                    <label>Soal Kuis Bab Ini</label>
+                    <p class="admin-form-hint" id="babKuisHintBaru">Simpan bab ini dulu, baru soal kuisnya bisa dikelola (buka lagi lewat "Ubah").</p>
+                    <div id="babKuisSummary" style="display:none;">
+                        <p class="admin-form-hint" id="babKuisSummaryText" style="margin:0 0 10px;"></p>
+                        <button type="button" class="admin-btn-secondary" onclick="openBabKuisManageModal()">
+                            <i class="fa-solid fa-list-check"></i> Kelola Soal Kuis
+                        </button>
+                    </div>
+                </div>
+                </fieldset>
+
+                <div class="admin-modal-footer">
+                    <button type="button" class="admin-btn-secondary" onclick="closeBabModal()">Batal</button>
+                    <button type="submit" class="admin-btn-primary" id="babFormSubmitBtn">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================== MODAL KELOLA SOAL KUIS (dibuka dari dalam modal Bab) ===================== -->
+    <div class="admin-modal-backdrop" id="babKuisManageModalBackdrop">
+        <div class="admin-modal">
+            <div class="admin-modal-header">
+                <h4 id="babKuisManageModalTitle">Kelola Soal Kuis</h4>
+                <button class="admin-modal-close" onclick="closeBabKuisManageModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="admin-form-group admin-form-check">
+                <label class="admin-switch">
+                    <input type="checkbox" id="f-bab-kuis-pakai-waktu" onchange="toggleBabKuisDurasi()">
+                    <span class="admin-switch-slider"></span>
+                </label>
+                <div>
+                    <label for="f-bab-kuis-pakai-waktu" style="margin-bottom:2px;">Batas Waktu Pengerjaan</label>
+                    <p class="admin-form-hint" style="margin:0;">Kuis otomatis terkirim saat waktu habis.</p>
+                </div>
+            </div>
+            <div class="admin-form-group" id="babKuisDurasiGroup" style="display:none;">
+                <label>Durasi (menit)</label>
+                <input type="number" id="f-bab-kuis-durasi-menit" min="1" placeholder="Contoh: 15">
+            </div>
+
+            <div class="admin-form-group">
+                <label>Petunjuk Pengerjaan (opsional)</label>
+                <textarea id="f-bab-petunjuk-kuis" rows="2" placeholder="Petunjuk cara mengerjakan/mengisi soal kuis ini untuk peserta"></textarea>
+            </div>
+
+            <div id="bab-kuis-soal-list"></div>
+            <div id="bab-kuis-soal-pagination" class="bab-kuis-pagination" style="display:none;"></div>
+            <button type="button" class="admin-btn-primary admin-btn-tambah-kecil" style="margin-top:12px;" onclick="openBabKuisSoalModal()">
+                <i class="fa-solid fa-plus"></i>Tambah
+            </button>
+            <p class="admin-form-hint" id="bab-kuis-urutan-hint" style="display:none; margin-top:10px;">
+                <i class="fa-solid fa-circle-info"></i> Urutan baru akan tersimpan setelah klik "Simpan".
+            </p>
+
+            <div class="admin-modal-footer">
+                <button type="button" class="admin-btn-secondary" onclick="closeBabKuisManageModal()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== MODAL RESET PROGRES PESERTA (Monitor Peserta) =====================
+         Dialog BIASA (bukan SweetAlert2) -- dua tahap (pilih bagian lalu
+         konfirmasi akhir) dirender lewat #monitorResetBody yang isinya
+         diganti-ganti oleh monitorResetPeserta/monitorResetGoStep2/
+         monitorResetConfirm di js/admin.js, bukan dua dialog terpisah. -->
+    <div class="admin-modal-backdrop" id="monitorResetModalBackdrop">
+        <div class="admin-modal">
+            <div class="admin-modal-header">
+                <div class="admin-modal-header-titlewrap">
+                    <h4 id="monitorResetTitle">Reset Progres</h4>
+                </div>
+                <button class="admin-modal-close" onclick="closeMonitorResetModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="monitorResetBody"></div>
+        </div>
+    </div>
+
+    <!-- ===================== MODAL EDIT USER (Manajemen User) ===================== -->
+    <div class="admin-modal-backdrop" id="userEditModalBackdrop">
+        <div class="admin-modal">
+            <div class="admin-modal-header">
+                <div class="admin-modal-header-titlewrap">
+                    <h4>Edit Akun Peserta</h4>
+                </div>
+                <button class="admin-modal-close" onclick="closeUserEditModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="userEditForm" onsubmit="submitUserEditForm(event)">
+                <input type="hidden" id="f-user-id">
+
+                <div class="admin-form-group">
+                    <label>Nama</label>
+                    <input type="text" id="f-user-name" required>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Email</label>
+                    <div class="cn-input-wrap">
+                        <input type="text" id="f-user-email" class="has-check-icon" required>
+                        <i class="fa-solid fa-circle-check cn-input-check-icon" id="f-user-email-check"></i>
+                    </div>
+                    <div class="cn-input-hint" id="f-user-email-hint"></div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Kata Sandi Baru</label>
+                    <div class="cn-input-wrap">
+                        <input type="password" id="f-user-password" class="has-eye-icon" placeholder="Kosongkan kalau tidak ingin diubah" autocomplete="new-password">
+                        <i class="fa-regular fa-eye cn-toggle-eye" data-target="f-user-password"></i>
+                    </div>
+                    <div class="cn-input-hint" id="f-user-password-hint">Minimal 8 karakter, kombinasi huruf &amp; angka.</div>
+                </div>
+
+                <div class="admin-form-error" id="userEditFormError" style="display:none; color:var(--danger-color); font-size:13px; margin-bottom:10px;"></div>
+
+                <div class="admin-modal-footer">
+                    <button type="button" class="admin-btn-secondary" onclick="closeUserEditModal()">Batal</button>
+                    <button type="submit" class="admin-btn-primary" id="userEditSubmitBtn">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================== MODAL HAPUS USER (Manajemen User) =====================
+         Dialog BIASA (bukan SweetAlert2), satu tahap konfirmasi saja
+         (beda dengan Reset Progres yang dua tahap -- di sini tidak ada
+         "bagian" yang perlu dipilih, seluruh akun & progresnya langsung
+         terhapus sekaligus). -->
+    <div class="admin-modal-backdrop" id="userDeleteModalBackdrop">
+        <div class="admin-modal">
+            <div class="admin-modal-header">
+                <div class="admin-modal-header-titlewrap">
+                    <h4 id="userDeleteTitle">Hapus Akun Peserta</h4>
+                </div>
+                <button class="admin-modal-close" onclick="closeUserDeleteModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p>Akun ini beserta <strong>seluruh progres, hasil tes, dan riwayat kuisnya</strong> akan dihapus permanen. Tindakan ini <strong>tidak bisa diurungkan</strong>.</p>
+            <div class="admin-modal-footer">
+                <button type="button" class="admin-btn-secondary" onclick="closeUserDeleteModal()">Batal</button>
+                <button type="button" class="admin-btn-danger" id="userDeleteConfirmBtn" onclick="confirmUserDelete()">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== MODAL DETAIL PESERTA (Monitor Peserta) ===================== -->
+    <div class="admin-modal-backdrop" id="monitorDetailModalBackdrop">
+        <div class="admin-modal admin-modal-xl">
+            <div class="admin-modal-header">
+                <div class="admin-modal-header-titlewrap">
+                    <h4 id="monitorDetailName">Detail Peserta</h4>
+                    <p class="admin-modal-header-desc" id="monitorDetailEmail"></p>
+                    <p class="admin-modal-header-desc monitor-detail-terdaftar" id="monitorDetailTerdaftar"></p>
+                </div>
+                <button class="admin-modal-close" onclick="closeMonitorDetailModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="monitorDetailBody">
+                <div class="admin-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Memuat detail...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialog "Lihat" (dari dalam modal Detail Peserta di atas) -- rincian
+         jawaban Tes Diagnostik/Final Tryout/Skor Terakhir tiap bab, ATAUPUN
+         riwayat percobaan kuis tiap bab. Dialog BIASA (bukan SweetAlert2),
+         tampil DI ATAS modal Detail Peserta (lihat z-index #monitorReviewModalBackdrop
+         di admin.css) -- isinya dipakaikan kelas quiz-review-*/quiz-riwayat-*
+         yang SAMA dengan tampilan peserta sendiri (css/quiz.css), lihat
+         monitorOpenReviewModal/monitorRenderPembahasanHtml/
+         monitorBuildRiwayatRowsHtml di js/admin.js. -->
+    <div class="admin-modal-backdrop" id="monitorReviewModalBackdrop">
+        <div class="admin-modal admin-modal-lg">
+            <div class="admin-modal-header">
+                <div class="admin-modal-header-titlewrap">
+                    <h4 id="monitorReviewTitle">Rincian</h4>
+                </div>
+                <button class="admin-modal-close" onclick="closeMonitorReviewModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="monitorReviewBody"></div>
+        </div>
+        <!-- Tombol "kembali ke atas" -- persis seperti di index.html/hasil
+             kuis peserta (lihat monitorSetupReviewBackToTop di js/admin.js),
+             tapi yang discroll di sini adalah dialog ini sendiri (backdrop-nya
+             overflow-y:auto), bukan window. Sengaja ditaruh sebagai SIBLING
+             dari .admin-modal (bukan di dalamnya) supaya position:fixed-nya
+             tetap relatif ke viewport, bukan ikut ter-transform oleh animasi
+             buka/tutup .admin-modal. Cuma ditampilkan untuk dialog rincian
+             jawaban (Tes Diagnostik/Final Tryout/Skor Terakhir Bab), tidak
+             untuk dialog Riwayat Percobaan -- lihat parameter showBackToTop
+             di monitorOpenReviewModal. -->
+        <button class="back-to-top" id="monitorBackToTopBtn" onclick="monitorScrollReviewToTop()" aria-label="Kembali ke atas">
+            <svg class="back-to-top-ring" width="40" height="40" viewBox="0 0 40 40">
+                <circle class="ring-bg" cx="20" cy="20" r="17"></circle>
+                <circle class="ring-progress" id="monitorBackToTopRing" cx="20" cy="20" r="17"></circle>
+            </svg>
+            <i class="fa-solid fa-chevron-up"></i>
+        </button>
+    </div>
+
+    <!-- ===================== MODAL DETAIL UMPAN BALIK ===================== -->
+    <div class="admin-modal-backdrop" id="ubDetailModalBackdrop">
+        <div class="admin-modal admin-modal-xl">
+            <div class="admin-modal-header">
+                <div class="admin-modal-header-titlewrap">
+                    <h4 id="ubDetailName">Detail Umpan Balik</h4>
+                    <p class="admin-modal-header-desc" id="ubDetailEmail"></p>
+                    <p class="admin-modal-header-desc" id="ubDetailTanggal"></p>
+                </div>
+                <button class="admin-modal-close" onclick="closeUbDetailModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="ubDetailBody">
+                <div class="admin-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Memuat detail...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tombol "kembali ke atas" untuk beberapa halaman admin yang isinya
+         bisa jadi panjang (Kelola Soal, Kelola Materi, Monitor Peserta,
+         Manajemen User, Umpan Balik) -- replikasi tombol yang sama
+         seperti di index.html tapi untuk scroll HALAMAN admin ini
+         (window), BUKAN scroll di dalam modal (itu sudah punya tombolnya
+         sendiri, #monitorBackToTopBtn di atas). Sengaja ditaruh sebagai
+         SIBLING modal-modal (langsung di <body>) supaya position:fixed-nya
+         relatif ke viewport. Cuma tampil kalau sedang di salah satu
+         halaman itu DAN sudah scroll ke bawah cukup jauh -- daftar
+         halamannya & logikanya lihat updateAdminBackToTop() di
+         admin.js. -->
+    <button class="back-to-top" id="adminBackToTopBtn" onclick="scrollAdminToTop()" aria-label="Kembali ke atas">
+        <svg class="back-to-top-ring" width="40" height="40" viewBox="0 0 40 40">
+            <circle class="ring-bg" cx="20" cy="20" r="17"></circle>
+            <circle class="ring-progress" id="adminBackToTopRing" cx="20" cy="20" r="17"></circle>
+        </svg>
+        <i class="fa-solid fa-chevron-up"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- ExcelJS -- dipakai buat generate file .xlsx langsung di browser
+         (Export XLSX di Monitor Peserta), tanpa perlu proses di server.
+         Dipilih (bukan SheetJS) karena butuh styling tabel beneran (bold,
+         border, lebar kolom nyesuain isi) -- itu fitur Pro/berbayar di
+         SheetJS, tapi gratis & bawaan di ExcelJS. -->
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <script src="js/transition.js?v=20260923"></script>
+    <script src="js/admin.js?v=20260923"></script>
+    <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
+</body>
+
+</html>

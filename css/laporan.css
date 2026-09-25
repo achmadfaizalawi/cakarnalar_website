@@ -1,0 +1,565 @@
+/* ===================== LAPORAN LENGKAP PESERTA ===================== */
+
+.laporan-main {
+    max-width: 900px;
+}
+
+/* --- Kartu ringkasan peserta di paling atas --- */
+.laporan-summary-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 26px 28px;
+    box-shadow: 0 6px 26px rgba(23, 51, 80, 0.08);
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ikon dekoratif samar-samar di background card, biar tidak terlalu
+   kosong/polos. Warnanya ikut status program (hijau = selesai, amber
+   = masih berjalan), senada dengan .laporan-summary-badge. */
+.laporan-summary-decor {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.laporan-summary-decor i {
+    position: absolute;
+    right: -18px;
+    bottom: -26px;
+    font-size: 120px;
+    color: #b9c0cf;
+    opacity: 0.08;
+    transform: rotate(-10deg);
+}
+
+.laporan-summary-card.selesai .laporan-summary-decor i {
+    color: var(--accent-color);
+}
+
+.laporan-summary-card.berjalan .laporan-summary-decor i {
+    color: var(--amber-color);
+}
+
+.laporan-summary-card > *:not(.laporan-summary-decor) {
+    position: relative;
+    z-index: 1;
+}
+
+.laporan-summary-card h3 {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 10px 0 4px;
+}
+
+.laporan-summary-meta {
+    font-size: 13.5px;
+    color: #8a8fa3;
+    margin: 0;
+}
+
+.laporan-summary-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 20px;
+}
+
+.laporan-summary-badge.selesai {
+    background: rgba(12, 122, 110, 0.12);
+    color: var(--accent-color);
+}
+
+.laporan-summary-badge.berjalan {
+    background: rgba(217, 138, 43, 0.12);
+    color: var(--amber-color);
+}
+
+/* --- Section wrapper --- */
+.laporan-section {
+    margin-bottom: 28px;
+}
+
+.laporan-section-title {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+}
+
+/* --- Kartu Tes Diagnostik / Final Tryout --- */
+.laporan-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 20px rgba(23, 51, 80, 0.07);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+}
+
+.laporan-card-kosong {
+    opacity: 0.65;
+}
+
+/* Ikon dekoratif samar-samar di background card, senada dengan ikon
+   card-nya sendiri (fa-flask untuk diagnostik, fa-trophy untuk
+   tryout) supaya card tidak terlalu polos. */
+.laporan-card-decor {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.laporan-card-decor i {
+    position: absolute;
+    right: -14px;
+    bottom: -20px;
+    font-size: 92px;
+    opacity: 0.07;
+    transform: rotate(-10deg);
+}
+
+.laporan-card-decor.diagnostik i {
+    color: var(--accent-color);
+}
+
+.laporan-card-decor.tryout i {
+    color: var(--primary-color);
+}
+
+.laporan-card > *:not(.laporan-card-decor) {
+    position: relative;
+    z-index: 1;
+}
+
+.laporan-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    color: #fff;
+    flex-shrink: 0;
+    background: var(--accent-color);
+}
+
+.laporan-card-icon.tryout {
+    background: var(--primary-color);
+}
+
+.laporan-card-body {
+    flex: 1;
+    min-width: 200px;
+}
+
+.laporan-card-body h6 {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0 0 3px;
+}
+
+/* Baris judul card. Di layar besar cuma berisi h6 (chip skor
+   disembunyikan, karena skor sudah ditampilkan di .laporan-card-stats
+   lewat .laporan-card-skor-inline). Di layar kecil, chip skor
+   dimunculkan di sebelah judul (lihat media query di bawah) dan
+   .laporan-card-skor-inline yang lama disembunyikan supaya skor
+   tidak tampil dobel. */
+.laporan-card-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    /* Jarak antara judul dan baris kategori/skor di bawahnya. Dipakai
+       sama persis untuk layar besar (jarak ke .laporan-card-stats)
+       maupun layar kecil (lihat row-gap di .laporan-card-stats di
+       bawah, disamakan nilainya) supaya terasa konsisten. */
+    margin-bottom: 10px;
+    /* Supaya .laporan-card-skor-chip-angka di bawah bisa memakai
+       satuan "cqi" juga (persis seperti .laporan-klasifikasi di
+       .laporan-card-stats), jadi ukuran hurufnya sama-sama dinamis
+       menyesuaikan ruang yang tersedia, bukan ukuran tetap. */
+    container-type: inline-size;
+}
+
+.laporan-card-heading h6 {
+    margin: 0;
+}
+
+/* Ukuran (padding + border-radius) disamakan persis dengan
+   .laporan-klasifikasi (badge kategori) supaya kedua "chip" ini
+   terlihat setara besarnya saat berdampingan dengan judul. */
+.laporan-card-skor-chip {
+    display: none;
+    align-items: baseline;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+}
+
+.laporan-card-skor-chip.diagnostik {
+    background: var(--accent-color);
+}
+
+.laporan-card-skor-chip.tryout {
+    background: var(--primary-color);
+}
+
+/* Sama persis dengan clamp() di .laporan-klasifikasi -- supaya angka
+   skor ini juga ikut mengecil secara proporsional saat ruang di
+   .laporan-card-heading menyempit, bukan ukuran tetap. */
+.laporan-card-skor-chip-angka {
+    font-weight: 700;
+    font-size: clamp(9px, 5cqi, 12px);
+    color: #fff;
+}
+
+.laporan-card-skor-chip-label {
+    font-size: clamp(6.5px, 3.5cqi, 9px);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+@media (max-width: 650px) {
+    .laporan-card-skor-chip {
+        display: flex;
+    }
+
+    .laporan-card-stats .laporan-card-skor-inline {
+        display: none;
+    }
+}
+
+.laporan-card-desc {
+    font-size: 13px;
+    color: #8a8fa3;
+    margin: 0 0 8px;
+}
+
+.laporan-card-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    /* row-gap disamakan dengan margin-bottom .laporan-card-heading di
+       atas (10px) supaya jarak antar-baris (header -> kategori ->
+       tanggal, saat semuanya turun ke baris masing-masing di layar
+       kecil) konsisten dan rapi. column-gap tetap 14px, itu jarak
+       horizontal antar item saat masih satu baris (skor, kategori). */
+    row-gap: 10px;
+    column-gap: 14px;
+    font-size: 13px;
+    color: var(--primary-color);
+    /* Supaya .laporan-klasifikasi di bawah bisa pakai satuan "cqi"
+       (persentase dari lebar kontainer ini) untuk mengecilkan
+       font-size-nya secara proporsional saat ruang menyempit. */
+    container-type: inline-size;
+}
+
+.laporan-card-stats strong {
+    font-size: 15px;
+    color: var(--accent-color);
+}
+
+/* Label klasifikasi (mis. "Practicing hingga Master Thinker") tidak
+   boleh membungkus jadi 2 baris di dalam pill-nya sendiri saat ruang
+   sempit -- dibiarkan tetap 1 baris (white-space: nowrap) tapi
+   ukuran hurufnya yang menyesuaikan (mengecil) mengikuti lebar
+   .laporan-card-stats lewat clamp() + satuan cqi, bukan malah
+   wrap ke bawah. */
+.laporan-klasifikasi {
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: clamp(9px, 5cqi, 12px);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.laporan-klasifikasi.merah {
+    background: rgba(217, 62, 62, 0.12);
+    color: #d93e3e;
+}
+
+.laporan-klasifikasi.kuning {
+    background: rgba(217, 138, 43, 0.12);
+    color: var(--amber-color);
+}
+
+.laporan-klasifikasi.hijau {
+    background: rgba(12, 122, 110, 0.12);
+    color: var(--accent-color);
+}
+
+.laporan-card-date {
+    font-size: 12px;
+    color: #8a8fa3;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Salinan tanggal, khusus layar kecil, ditaruh sebagai anggota
+   terakhir di dalam .laporan-card-stats (persis di sebelah badge
+   klasifikasi). Di layar besar disembunyikan (tanggal aslinya sudah
+   pas berdiri sendiri di kanan card lewat .laporan-card-date). Di
+   layar kecil, "flex-basis: 100%" pada elemen ini memaksanya pindah
+   ke baris baru di dalam .laporan-card-stats -- jadi tanggal turun
+   tepat DI BAWAH badge klasifikasi, rata kiri sejajar dengan badge
+   (bukan di kanan card seperti sebelumnya, dan bukan pula di
+   sampingnya). */
+.laporan-card-date-mobile {
+    display: none;
+}
+
+@media (max-width: 650px) {
+    .laporan-card-date {
+        display: none;
+    }
+
+    .laporan-card-date-mobile {
+        display: block;
+        flex-basis: 100%;
+        font-size: 12px;
+        color: #8a8fa3;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+}
+
+/* --- Tabel ringkas per Bab --- */
+.laporan-bab-table {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(23, 51, 80, 0.07);
+    overflow: hidden;
+}
+
+.laporan-bab-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 150px 70px;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #eef1f6;
+    font-size: 13.5px;
+}
+
+.laporan-bab-row:last-child {
+    border-bottom: none;
+}
+
+.laporan-bab-row-head {
+    background: #f8f9fc;
+    font-weight: 700;
+    color: #8a8fa3;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.laporan-bab-nomor {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.laporan-bab-judul {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.laporan-bab-skor {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Label "Skor" di samping angka -- disembunyikan di layar besar
+   (kolom tabel sudah punya header "SKOR" sendiri, jadi tidak perlu
+   diulang di tiap baris), baru dimunculkan di layar kecil lewat
+   media query di bawah supaya seperti "100 Skor", senada dengan chip
+   skor di card Tes Diagnostik/Final Tryout. */
+.laporan-bab-skor-label {
+    display: none;
+}
+
+/* Bungkus status + skor. Di layar besar dibuat "transparan" lewat
+   display:contents supaya .laporan-bab-status dan .laporan-bab-skor
+   tetap jadi grid item langsung dari .laporan-bab-row (persis kolom
+   Status & Skor yang terpisah seperti semula). Di layar kecil,
+   wrapper ini yang jadi 1 grid item (lihat media query di bawah),
+   supaya status+skor selalu menempel rapat satu sama lain, bukan
+   terpisah jauh oleh lebar kolom grid. */
+.laporan-bab-status-skor-wrap {
+    display: contents;
+}
+
+.laporan-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.laporan-status-pill.lulus {
+    background: rgba(12, 122, 110, 0.12);
+    color: var(--accent-color);
+}
+
+.laporan-status-pill.berjalan {
+    background: rgba(217, 138, 43, 0.12);
+    color: var(--amber-color);
+}
+
+.laporan-status-pill.belum {
+    background: #eef1f6;
+    color: #8a8fa3;
+}
+
+@media (max-width: 650px) {
+    /* Status "Lulus" dan skor digabung jadi 1 baris lewat
+       .laporan-bab-status-skor-wrap (flex, gap kecil) supaya chip
+       skor menempel rapat di sebelah kanan "Lulus" -- bukan malah
+       kepisah jauh ke pojok kanan card. Wrapper ini yang jadi 1 grid
+       item, rata kiri sejajar dengan judul bab (bukan nomor). */
+    .laporan-bab-row {
+        grid-template-columns: 28px 1fr;
+        grid-template-areas:
+            "nomor judul"
+            ".     statuswrap";
+        row-gap: 6px;
+    }
+
+    .laporan-bab-nomor {
+        grid-area: nomor;
+    }
+
+    .laporan-bab-judul {
+        grid-area: judul;
+    }
+
+    .laporan-bab-status-skor-wrap {
+        display: flex;
+        grid-area: statuswrap;
+        align-items: center;
+        gap: 10px;
+        justify-self: start;
+    }
+
+    /* Skor dibuat seperti chip/card kecil, mengikuti gaya chip skor
+       di card Tes Diagnostik / Final Tryout -- bukan lagi angka
+       polos. */
+    .laporan-bab-skor {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 20px;
+    }
+
+    .laporan-bab-skor.ada {
+        background: var(--accent-color);
+        color: #fff;
+    }
+
+    .laporan-bab-skor.kosong {
+        background: #eef1f6;
+        color: #8a8fa3;
+    }
+
+    .laporan-bab-skor-label {
+        display: inline;
+        font-size: 8.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-left: 3px;
+        opacity: 0.85;
+    }
+
+    .laporan-bab-row-head {
+        display: none;
+    }
+}
+
+/* --- Ajakan unduh sertifikat di bagian bawah, kalau program sudah
+   selesai --- */
+.laporan-cta {
+    background: linear-gradient(135deg, var(--accent-color) 0%, #095c53 100%);
+    border-radius: 18px;
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    color: #fff;
+}
+
+/* Ikon dipisah jadi kolomnya sendiri (bukan lagi di dalam h6) supaya
+   judul dan paragraf di .laporan-cta-text sama-sama mulai dari titik
+   rata kiri yang sama persis -- sebelumnya paragraf mulai dari tepi
+   container (x=0) sementara TEKS judul mulai lebih ke kanan (geser
+   oleh lebar ikon + gap-nya), jadi kelihatan tidak sejajar. Berlaku
+   di layar besar maupun kecil, karena strukturnya sama, cuma lebar
+   .laporan-cta yang berubah. */
+.laporan-cta-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.laporan-cta-icon {
+    width: 22px;
+    flex-shrink: 0;
+    font-size: 18px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.laporan-cta-text h6 {
+    font-weight: 700;
+    margin: 0 0 4px;
+}
+
+.laporan-cta-text p {
+    margin: 0;
+    font-size: 13.5px;
+    opacity: 0.9;
+}
+
+.laporan-cta .btn-bab-action {
+    background: #fff;
+    color: var(--accent-color);
+    flex-shrink: 0;
+}
+
+@media (max-width: 650px) {
+    /* Saat tombol turun ke barisnya sendiri di layar kecil, geser
+       rata kirinya supaya sejajar dengan teks judul/paragraf di atas
+       (bukan sejajar dengan ikon di sebelah kiri teks itu) --
+       jaraknya sama dengan lebar .laporan-cta-icon + gap-nya
+       (22px + 12px = 34px). */
+    .laporan-cta .btn-bab-action {
+        margin-left: 34px;
+    }
+}

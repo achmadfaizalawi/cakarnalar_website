@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tes Diagnostik - Cakar Nalar</title>
+
+    <link rel="icon" type="image/png" href="assets/logo/logo-icon-transparent.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/quiz.css">
+</head>
+
+<body class="quiz-body">
+
+    <nav class="quiz-topbar">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="dashboard.html" class="quiz-back-link">
+                <i class="fa-solid fa-arrow-left"></i> <span class="quiz-back-text">Kembali ke Dashboard</span>
+            </a>
+            <div class="quiz-timer-badge" id="quiz-timer" style="display:none;">
+                <i class="fa-solid fa-hourglass-half"></i>
+                <span id="quiz-timer-text">00:00</span>
+            </div>
+            <img src="assets/logo/logo-cakar-nalar-horizontal.png" class="logo-img" alt="Cakar Nalar">
+        </div>
+    </nav>
+
+    <main class="quiz-main">
+        <div class="quiz-header">
+            <h2 id="quiz-title">Tes Diagnostik</h2>
+            <p id="quiz-subtitle">Memuat...</p>
+        </div>
+
+        <div id="quiz-content">
+            <div class="quiz-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                Memuat soal...
+            </div>
+        </div>
+    </main>
+
+    <!-- ===================== NAVIGATOR SOAL (mengambang di kanan, buka ke samping) ===================== -->
+    <div class="quiz-navigator" id="quiz-navigator" style="display:none;">
+        <div class="quiz-navigator-panel" id="quiz-navigator-panel">
+            <div class="quiz-navigator-panel-inner">
+                <div class="quiz-navigator-grid" id="quiz-navigator-grid"></div>
+                <div class="quiz-navigator-legend">
+                    <span><span class="quiz-navigator-legend-dot answered"></span>Terisi</span>
+                    <span><span class="quiz-navigator-legend-dot unanswered"></span>Kosong</span>
+                </div>
+                <div class="quiz-navigator-pagination" id="quiz-navigator-pagination" style="display:none;"></div>
+            </div>
+        </div>
+        <button type="button" class="quiz-navigator-toggle-btn" id="quiz-navigator-toggle-btn"
+            onclick="toggleQuizNavigator()" aria-label="Navigasi Soal">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <div class="quiz-footer-bar" id="quiz-footer-bar" style="display:none;">
+        <div class="container">
+            <span class="quiz-progress-text" id="quiz-progress-text">
+                <span id="quiz-progress-num">0 dari 0</span> <span class="quiz-progress-label">soal terjawab</span>
+            </span>
+            <div class="quiz-progress-bar-track">
+                <div class="quiz-progress-bar-fill" id="quiz-progress-fill"></div>
+            </div>
+            <button class="quiz-submit-btn" id="quiz-submit-btn" disabled onclick="submitQuizJawaban()">
+                <span class="quiz-submit-btn-prefix">Selesai &amp; </span>Kirim Jawaban
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="site-footer site-footer-minimal">
+        <div class="container">
+            <div class="footer-bottom">
+                Cakar Nalar © <span id="footer-year"></span>. Seluruh hak cipta dilindungi.
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/transition.js"></script>
+    <script src="js/quiz.js"></script>
+    <script>
+        initQuizPage({
+            apiGet: 'api/get_diagnostik.php',
+            apiSubmit: 'api/submit_diagnostik.php',
+            title: 'Tes Diagnostik',
+            subtitle: 'Ukur baseline kemampuan kognitif dan penalaran kritismu sebelum mulai belajar. Kerjakan dengan jujur, hasil ini tidak memengaruhi status lulus.',
+            doneTitle: 'Tes Diagnostik Selesai',
+            doneDesc: 'Baseline kemampuan awalmu sudah tercatat. Selamat belajar!',
+            lockedTitle: 'Tes Diagnostik Sudah Pernah Dikerjakan',
+            backUrl: 'dashboard.html',
+            storageKey: 'diagnostik',
+            showPembahasan: false
+        });
+        document.getElementById('footer-year').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>

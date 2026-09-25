@@ -1,0 +1,4 @@
+# Cegah eksekusi PHP di folder upload (keamanan)
+<FilesMatch "\.(php|phtml|php\d)$">
+    Require all denied
+</FilesMatch>

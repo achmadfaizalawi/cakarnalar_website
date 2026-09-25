@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Materi Bab - Cakar Nalar</title>
+
+    <link rel="icon" type="image/png" href="assets/logo/logo-icon-transparent.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/quiz.css">
+    <link rel="stylesheet" href="css/materi.css">
+</head>
+
+<body class="quiz-body materi-body">
+
+    <nav class="quiz-topbar">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="dashboard.html" class="quiz-back-link">
+                <i class="fa-solid fa-arrow-left"></i> <span class="quiz-back-text">Kembali ke Dashboard</span>
+            </a>
+            <img src="assets/logo/logo-cakar-nalar-horizontal.png" class="logo-img" alt="Cakar Nalar">
+        </div>
+    </nav>
+
+    <main class="quiz-main materi-main">
+        <div id="materi-content">
+            <div class="quiz-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                Memuat materi...
+            </div>
+        </div>
+    </main>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="site-footer site-footer-minimal">
+        <div class="container">
+            <div class="footer-bottom">
+                Cakar Nalar © <span id="footer-year"></span>. Seluruh hak cipta dilindungi.
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/transition.js"></script>
+    <script src="js/materi.js"></script>
+    <script>
+        document.getElementById('footer-year').textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>

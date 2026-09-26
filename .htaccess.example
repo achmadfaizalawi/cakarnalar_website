@@ -1,0 +1,29 @@
+# Template .htaccess -- salin jadi ".htaccess" di root project, lalu
+# GABUNGKAN dengan blok "cPanel-generated php ini directives" yang
+# otomatis dibuat hosting kamu (kalau ada) -- jangan hapus blok itu,
+# cukup taruh aturan di bawah ini SETELAH blok cPanel-nya.
+# (File ".htaccess" asli sengaja di-gitignore karena isinya beda-beda
+# tergantung path folder home akun hosting yang dipakai.)
+
+RewriteEngine On
+
+# Jangan diutak-atik: folder api/ (endpoint PHP, sudah pakai ekstensi .php
+# sendiri) & uploads/ (file upload apa adanya) -- biar aturan di bawah
+# tidak ikut nyasar ke situ.
+RewriteRule ^api/ - [L]
+RewriteRule ^uploads/ - [L]
+
+# 1) Kalau ada yang masih minta file dengan akhiran ".html" secara
+#    eksplisit (ketik manual di address bar / link lama) -- alihkan
+#    (redirect beneran, 301) ke alamat TANPA ".html", supaya address bar
+#    browser langsung tampil bersih.
+RewriteCond %{THE_REQUEST} \s/+([^?\s]+)\.html[\s?] [NC]
+RewriteRule ^ /%1 [R=301,L]
+
+# 2) Kebalikannya -- kalau alamat yang diminta TIDAK ada ekstensinya
+#    (mis. "/dashboard") tapi file ".html"-nya beneran ada di server,
+#    tampilkan isi file itu TANPA redirect (internal saja), jadi address
+#    bar tetap bersih tanpa ".html".
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^([^.]+)$ $1.html [L]

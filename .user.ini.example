@@ -1,0 +1,12 @@
+; Template .user.ini -- salin jadi ".user.ini" di root project, lalu
+; GABUNGKAN dengan blok yang otomatis dibuat cPanel hosting kamu kalau
+; sudah ada (mis. error_log/log_errors) -- jangan dihapus, cukup
+; tambahkan baris-baris di bawah ini setelahnya.
+; (File ".user.ini" asli sengaja di-gitignore karena baris error_log-nya
+; otomatis berisi path folder home akun hosting yang berbeda-beda.)
+
+post_max_size = 150M
+upload_max_filesize = 110M
+max_execution_time = 300
+max_input_time = 300
+memory_limit = 256M

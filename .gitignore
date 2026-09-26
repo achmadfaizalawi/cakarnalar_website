@@ -1,13 +1,28 @@
 # Kredensial database produksi -- JANGAN pernah di-commit.
+# Salin config.example.php jadi config.php lalu isi kredensial asli
+# (di server produksi biasanya file ini sudah ada duluan, tidak perlu
+# dibuat ulang -- cukup pastikan tetap di-ignore git).
 api/config.php
 
-# File materi yang diunggah peserta/admin -- tidak perlu ikut di git.
+# File-file materi yang diunggah peserta/admin (video, PDF, gambar) --
+# bisa besar dan berisi konten milik pengguna, tidak perlu ikut di git.
 uploads/*
 !uploads/.htaccess
 !uploads/.gitkeep
 
+# .htaccess & .user.ini di root project ini SEBAGIAN ISINYA otomatis
+# ditulis ulang oleh cPanel tiap hosting (path folder home, mis.
+# /home/vortheac/logs/...) -- beda-beda per akun hosting, jadi tidak
+# perlu (dan sebaiknya tidak) ikut di-commit. Salin dari .htaccess.example
+# / .user.ini.example lalu sesuaikan/gabungkan dengan versi bawaan cPanel
+# di hosting yang dipakai. (Ini TIDAK memengaruhi uploads/.htaccess di
+# atas -- itu file yang beda, tetap ikut di-commit seperti biasa.)
+/.htaccess
+/.user.ini
+
 # File log / sisa proses development lokal.
 *.log
+php_server.log
 
 # File OS/editor umum.
 .DS_Store
